@@ -11,9 +11,11 @@
   },
   "dependencies": {
     "@ws/core": "*",
-    "@ws/db": "*"
+    "@ws/db": "*",
+    "drizzle-orm": "^0.36.0"
   },
   "devDependencies": {
-    "tsx": "^4.23.15"
+    "tsx": "^4.23.15",
+    "dotenv": "^16.4.0"
   }
 }
