@@ -67,6 +67,8 @@ Proyek UAS sekaligus makalah jurnal (BEES: Bulletin of Electrical and Electronic
 
 ### 2.1 Struktur repositori (monorepo, npm workspaces)
 
+> **Pembaruan (web dibangun lebih dulu dari hardware):** `packages/` (`core`, `db`), `tools/seed`, dan `apps/web` kini berada di dalam folder `web/` (monorepo npm workspaces sendiri). `apps/ingest`, `tools/simulator`, dan firmware menyusul; folder firmware sementara bernama `esp/`. Paket dipakai apa adanya oleh ingest nanti. Rancangan: `web/docs/superpowers/specs/2026-11-07-web-dashboard-design.md`.
+
 ```
 /
 ├─ CLAUDE.md
@@ -425,13 +427,13 @@ CLI: `npm run fuzzy:explain -- --dp -1.2 --rh 88 --t 26.5` mencetak perhitungan 
 
 ## 14. Deployment (VPS)
 
-- `docker-compose.yml` berisi: `postgres` (versi 16, volume persisten), `ingest`, `web`, `caddy`.
+- `docker-compose.yml` berisi: `ingest`, `web`, `caddy`. **Tidak ada service `postgres`**: `DATABASE_URL` menunjuk ke Postgres terkelola (Supabase; dua proyek `dev` dan `prod`) atau Postgres sendiri. Seed hanya boleh jalan jika `app_config.environment = 'dev'`.
 - **Caddy** sebagai reverse proxy dengan HTTPS otomatis:
   - `/ws/device` dan `/ws/live` → ingest,
   - selain itu → web.
 - Migrasi database dijalankan otomatis saat ingest start.
 - Script `npm run device:create -- --id stasiun-01` untuk membuat perangkat dan mencetak token (hanya sekali).
-- Backup harian database dengan `pg_dump` ke folder volume (simpan 14 hari).
+- Backup: Supabase punya cadangan sendiri, tetapi tetap lakukan ekspor mandiri data penelitian (CSV dari dashboard dan/atau `pg_dump` berkala) karena itu hasil utama makalah.
 - `README.md` berisi langkah lengkap: setup VPS, isi `.env`, deploy, flashing firmware, kalibrasi sensor hujan, dan checklist sebelum periode pengambilan data.
 
 ---
