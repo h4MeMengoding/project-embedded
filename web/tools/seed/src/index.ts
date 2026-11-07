@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { eq } from 'drizzle-orm';
 import { computeWindowInputs, runFuzzy, isPredictRain, FUZZY_CONFIG_V1, type MinuteRow } from '@ws/core';
 import {
-  createDb, devices, readingsMinute, rainEvents, fuzzyPredictions, bmkgForecasts, evaluationSlots,
+  createDb, recomputeEvaluation, devices, readingsMinute, rainEvents, fuzzyPredictions, bmkgForecasts, evaluationSlots,
   type Db,
 } from '@ws/db';
 import { assertDevEnvironment } from './guard';
@@ -92,7 +92,16 @@ export async function seed(db: Db, o: { deviceId: string; scenario: Scenario; da
   }
   await insertChunked(preds, (c) => db.insert(fuzzyPredictions).values(c).onConflictDoNothing());
   await insertChunked(bmkg, (c) => db.insert(bmkgForecasts).values(c).onConflictDoNothing());
-  return { minutes: series.minutes.length, predictions: preds.length, bmkg: bmkg.length };
+  const ev = await recomputeEvaluation(db, {
+    deviceId: o.deviceId,
+    adm4: 'SEED',
+    from: new Date(now.getTime() - o.days * 86400000),
+    to: now,
+    slotMode: process.env.BMKG_SLOT_MODE === 'center' ? 'center' : 'start',
+    minWetMinutes: Number(process.env.RAIN_MIN_WET_MINUTES ?? 10),
+    predictThreshold: Number(process.env.PREDICT_THRESHOLD ?? 50),
+  });
+  return { minutes: series.minutes.length, predictions: preds.length, bmkg: bmkg.length, evalSlots: ev.slots };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
