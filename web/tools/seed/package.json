@@ -1,0 +1,19 @@
+{
+  "name": "@ws/seed",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run --passWithNoTests",
+    "seed": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@ws/core": "*",
+    "@ws/db": "*"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}
