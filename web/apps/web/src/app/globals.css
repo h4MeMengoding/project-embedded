@@ -49,3 +49,86 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ===== komponen dasar (dari mockup beranda-v6) ===== */
+:root {
+  --w: clamp(1120px, 80vw, 1440px);
+  --pad: 64px;
+  --hero-grad: radial-gradient(760px 380px at 14% 26%, rgba(130, 215, 125, 0.38), transparent 62%),
+    radial-gradient(640px 440px at 88% 14%, rgba(200, 245, 175, 0.3), transparent 62%),
+    linear-gradient(135deg, #1b6232 0%, #2c8640 52%, #4aa653 100%);
+}
+:root[data-theme='dark'] {
+  --hero-grad: radial-gradient(760px 380px at 14% 26%, rgba(60, 140, 70, 0.3), transparent 62%),
+    linear-gradient(135deg, #0f3a1d 0%, #14502a 52%, #1d6a35 100%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --hero-grad: radial-gradient(760px 380px at 14% 26%, rgba(60, 140, 70, 0.3), transparent 62%),
+      linear-gradient(135deg, #0f3a1d 0%, #14502a 52%, #1d6a35 100%);
+  }
+}
+.hero-band { background: var(--hero-grad); border-radius: 0 0 48px 48px; color: #fff; }
+.shell { width: 100%; margin: 0 auto; padding: 0 20px; }
+@media (min-width: 1024px) { .shell { width: var(--w); padding: 0 var(--pad); } }
+
+.nav { display: flex; align-items: center; gap: 36px; height: 48px; color: #d9ecd5; padding-top: 0; }
+.nav-wrap { padding-top: 28px; }
+.logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 20px; color: #fff; white-space: nowrap; }
+.logo i { width: 24px; height: 24px; background: var(--accent); border-radius: 8px 4px 8px 4px; }
+.nav .sep { width: 1px; height: 24px; background: rgba(255, 255, 255, 0.22); }
+.nav-links { display: flex; align-items: center; gap: 36px; }
+.nav a { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; color: #cfe5ca; text-decoration: none; white-space: nowrap; }
+.nav a svg { width: 16px; height: 16px; }
+.nav a.on { color: var(--accent); font-weight: 700; }
+.nav .sp { flex: 1; }
+.status-pill { height: 42px; border-radius: 22px; background: rgba(255, 255, 255, 0.17); display: flex; align-items: center; gap: 10px; padding: 0 20px; font-size: 14px; font-weight: 600; color: #fff; white-space: nowrap; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #7dff8a; animation: ping 2s infinite; }
+.dot.off { background: #ffb48a; animation: none; }
+@keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(125, 255, 138, 0.7); } 70%, 100% { box-shadow: 0 0 0 10px rgba(125, 255, 138, 0); } }
+.icon-btn { flex: none; width: 42px; height: 42px; border-radius: 50%; background: #fff; color: #222; display: grid; place-items: center; font-size: 16px; border: 0; cursor: pointer; }
+.nav-menu { display: none; }
+@media (max-width: 1023px) {
+  .nav { gap: 12px; }
+  .nav-links, .nav .sep { display: none; }
+  .nav-menu { display: block; position: relative; }
+  .nav-menu summary { flex: none; list-style: none; cursor: pointer; width: 42px; height: 42px; border-radius: 50%; background: rgba(255, 255, 255, 0.17); display: grid; place-items: center; color: #fff; }
+  .nav-menu summary::-webkit-details-marker { display: none; }
+  .nav-menu .menu-list { position: absolute; right: 0; top: 52px; z-index: 20; background: #12331f; border-radius: 20px; padding: 12px; display: flex; flex-direction: column; gap: 4px; min-width: 180px; box-shadow: 0 18px 36px rgba(0, 0, 0, 0.3); }
+  .nav-menu .menu-list a { padding: 10px 14px; border-radius: 12px; }
+  .pill-id { display: none; }
+  .logo { font-size: 17px; }
+  .status-pill { padding: 0 14px; height: 38px; font-size: 13px; }
+}
+
+.pl { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; padding: 9px 18px; border-radius: 22px; background: rgba(255, 255, 255, 0.16); color: #fff; }
+.pl.white { background: #fff; color: #0f2a1b; font-weight: 700; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14); }
+.pl.ok i { background: var(--ok); }
+.pl.warn i { background: var(--accent); }
+.pl i { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); }
+
+.card { border-radius: 28px; padding: 24px; display: flex; flex-direction: column; }
+@media (min-width: 1024px) { .card { padding: 32px; } }
+.card h3 { font-size: 20px; font-weight: 700; }
+.card .sub { font-size: 13px; font-weight: 500; opacity: 0.68; margin-top: 2px; }
+.card.dark { background: linear-gradient(160deg, #12331f, #0a2113); color: #eaf5e7; box-shadow: 0 18px 36px rgba(10, 40, 20, 0.28); }
+.card.yellow { background: var(--yellow); color: #2d2308; box-shadow: 0 18px 36px rgba(255, 201, 60, 0.34); }
+.card.light { background: var(--card); color: var(--ink); box-shadow: 0 18px 36px rgba(40, 70, 50, 0.14); }
+
+/* stasiun */
+.stn { position: relative; width: clamp(260px, 26vw, 400px); aspect-ratio: 1; flex: none; }
+.stn svg { width: 100%; height: 100%; overflow: visible; }
+.stn .tag { position: absolute; background: #fff; color: #0f2a1b; font-size: 13px; font-weight: 600; padding: 6px 14px 6px 11px; border-radius: 16px; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16); white-space: nowrap; }
+.stn .tag i { width: 7px; height: 7px; border-radius: 50%; background: #35c26a; animation: blink 1.8s infinite; }
+.stn .tag em { font-style: normal; font-weight: 500; color: #587062; }
+.float { animation: float 5s ease-in-out infinite; }
+@keyframes float { 50% { transform: translateY(-4px); } }
+.drop { animation: fall 1.2s linear infinite; opacity: 0; }
+.drop:nth-child(2) { animation-delay: 0.3s; } .drop:nth-child(3) { animation-delay: 0.6s; } .drop:nth-child(4) { animation-delay: 0.9s; } .drop:nth-child(5) { animation-delay: 0.15s; }
+@keyframes fall { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 0.9; } 100% { transform: translateY(62px); opacity: 0; } }
+.ray { animation: blink 2.4s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: 0.25; } }
+.wave { animation: wave 2.4s ease-out infinite; opacity: 0; }
+.wave:nth-child(2) { animation-delay: 0.5s; } .wave:nth-child(3) { animation-delay: 1s; }
+@keyframes wave { 0% { opacity: 0.9; } 100% { opacity: 0; } }
+.led { animation: blink 1.2s infinite; }
