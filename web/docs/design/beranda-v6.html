@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beranda v6 - Cincin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* v3 yang dilonggarkan. Satu font, skala: 13 / 15 / 20 / 40 / 120 */
+:root{
+  --font:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --ink:#0f2a1b; --muted:#587062; --page:#e9f0e9; --card2:#d5e0d6;
+  --yellow:#ffc93c; --accent:#f7d04a; --ok:#2fae4f;
+  --w:clamp(1120px,80vw,1440px); --pad:64px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#b3bbb4;font-family:var(--font);font-size:15px;line-height:1.5;color:var(--ink);-webkit-font-smoothing:antialiased;padding:32px 0 48px;min-width:1160px}
+.num{font-variant-numeric:tabular-nums}
+.frame{width:var(--w);margin:0 auto;background:var(--page);border-radius:40px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.2)}
+.top{position:relative;padding:36px var(--pad) 0}
+.hero-bg{position:absolute;inset:0;border-radius:0 0 48px 48px;
+  background:radial-gradient(760px 380px at 14% 26%,rgba(130,215,125,.38),transparent 62%),
+             radial-gradient(640px 440px at 88% 14%,rgba(200,245,175,.30),transparent 62%),
+             linear-gradient(135deg,#1b6232 0%,#2c8640 52%,#4aa653 100%)}
+.z{position:relative;z-index:2}
+
+/* nav */
+.nav{display:flex;align-items:center;gap:36px;height:48px;color:#d9ecd5}
+.logo{display:flex;align-items:center;gap:12px;font-weight:700;font-size:20px;color:#fff;white-space:nowrap}
+.logo i{width:24px;height:24px;background:var(--accent);border-radius:8px 4px 8px 4px}
+.nav .sep{width:1px;height:24px;background:rgba(255,255,255,.22)}
+.nav a{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:#cfe5ca;text-decoration:none;white-space:nowrap}
+.nav a svg{width:16px;height:16px}
+.nav a.on{color:var(--accent);font-weight:700}
+.nav .sp{flex:1}
+.pill{height:42px;border-radius:22px;background:rgba(255,255,255,.17);display:flex;align-items:center;gap:10px;padding:0 20px;font-size:14px;font-weight:600;color:#fff;white-space:nowrap}
+.dot{width:10px;height:10px;border-radius:50%;background:#7dff8a;animation:ping 2s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(125,255,138,.7)}70%,100%{box-shadow:0 0 0 10px rgba(125,255,138,0)}}
+.ic{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.17);display:grid;place-items:center;font-size:16px}
+.ic.w{background:#fff;color:#222}
+
+/* hero */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:48px;padding:56px 0 48px}
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.12em;color:var(--accent);text-transform:uppercase}
+.main{display:flex;align-items:center;gap:56px;margin-top:20px}
+.gauge{width:clamp(340px,27vw,420px);flex:none;filter:drop-shadow(0 8px 28px rgba(0,0,0,.18))}
+.gauge svg{width:100%;height:auto;display:block}
+.info{display:flex;flex-direction:column;align-items:flex-start;gap:20px}
+.cat{font-size:36px;font-weight:800;color:#2a2008;background:linear-gradient(135deg,#ffd84a,#ff9d4a);padding:8px 30px;border-radius:32px;line-height:1.2;box-shadow:0 10px 26px rgba(255,150,50,.35)}
+.agree{display:inline-flex;align-items:center;gap:10px;background:#fff;color:var(--ink);font-size:15px;font-weight:700;padding:11px 22px;border-radius:24px;box-shadow:0 10px 24px rgba(0,0,0,.14)}
+.agree i{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(47,174,79,.22)}
+.rainstate{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);padding:12px 26px 12px 14px;border-radius:22px;backdrop-filter:blur(8px)}
+.rainstate .ico2{width:48px;height:48px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font-size:22px}
+.rainstate small{display:block;font-size:13px;font-weight:600;color:#d6ecd0}
+.rainstate b{font-size:20px;font-weight:700;color:#fff}
+
+.ring{width:clamp(220px,17vw,260px);height:auto;flex:none;filter:drop-shadow(0 8px 28px rgba(0,0,0,.18))}
+.main{margin-top:0;gap:48px}
+.info{gap:18px}
+.lead{font-size:clamp(26px,2.2vw,32px);font-weight:700;line-height:1.25;color:#fff}
+.pills{display:flex;gap:10px;flex-wrap:wrap}
+.pl{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:9px 18px;border-radius:22px;background:rgba(255,255,255,.16);white-space:nowrap;color:#fff}
+.pl.w{background:#fff;color:var(--ink);font-weight:700;box-shadow:0 10px 24px rgba(0,0,0,.14)}
+.pl i{width:9px;height:9px;border-radius:50%;background:var(--ok)}
+.pl i.y{background:var(--accent)}
+/* stasiun */
+.stn{position:relative;width:clamp(320px,26vw,400px);aspect-ratio:1;flex:none}
+.stn svg{width:100%;height:100%;overflow:visible}
+.tag{position:absolute;background:#fff;color:var(--ink);font-size:13px;font-weight:600;padding:6px 14px 6px 11px;border-radius:16px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 20px rgba(0,0,0,.16);white-space:nowrap}
+.tag i{width:7px;height:7px;border-radius:50%;background:#35c26a;animation:blink 1.8s infinite}
+.tag em{font-style:normal;font-weight:500;color:var(--muted)}
+.float{animation:float 5s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-4px)}}
+.drop{animation:fall 1.2s linear infinite;opacity:0}
+.drop:nth-child(2){animation-delay:.3s}.drop:nth-child(3){animation-delay:.6s}.drop:nth-child(4){animation-delay:.9s}.drop:nth-child(5){animation-delay:.15s}
+@keyframes fall{0%{transform:translateY(0);opacity:0}15%{opacity:.9}100%{transform:translateY(62px);opacity:0}}
+.ray{animation:blink 2.4s ease-in-out infinite}
+@keyframes blink{50%{opacity:.25}}
+.wave{animation:wave 2.4s ease-out infinite;opacity:0}
+.wave:nth-child(2){animation-delay:.5s}.wave:nth-child(3){animation-delay:1s}
+@keyframes wave{0%{opacity:.9}100%{opacity:0}}
+.led{animation:blink 1.2s infinite}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+/* sensor di atas hijau */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:130px}
+.agree{white-space:nowrap}
+.stat{padding:0 32px;border-left:1px solid rgba(255,255,255,.2)}
+.stat:first-child{padding-left:0;border-left:0}
+.stat .l{font-size:14px;font-weight:600;color:#e2f3dc;display:flex;align-items:center;gap:10px}
+.stat .l b{width:10px;height:10px;border-radius:3px;background:var(--accent)}
+.stat .v{font-size:40px;font-weight:700;line-height:1.1;color:#fff;margin-top:12px}
+.stat .v small{font-size:15px;font-weight:600;color:#cfe6c8;margin-left:6px}
+
+/* kartu menimpa tepi hero */
+.row{display:grid;grid-template-columns:1fr 1fr 1.05fr;gap:28px;padding:0 var(--pad);margin-top:-90px;position:relative;z-index:3}
+.card{border-radius:28px;padding:32px;display:flex;flex-direction:column}
+.card h3{font-size:20px;font-weight:700}
+.card .sub{font-size:13px;font-weight:500;opacity:.68;margin-top:2px}
+.dark{background:linear-gradient(160deg,#12331f,#0a2113);color:#eaf5e7;box-shadow:0 18px 36px rgba(10,40,20,.28)}
+.dark svg{width:100%;height:auto;margin-top:26px}
+.dark .xs{display:flex;justify-content:space-between;font-size:13px;opacity:.6;margin-top:12px}
+.yel{background:var(--yellow);color:#2d2308;box-shadow:0 18px 36px rgba(255,201,60,.34)}
+.slot{display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid rgba(45,35,8,.14)}
+.slot:last-of-type{border-bottom:0}
+.slot .t{font-size:13px;font-weight:600;opacity:.7}
+.slot b{display:block;font-size:20px;font-weight:700;margin-top:2px}
+.tg{font-size:13px;font-weight:700;padding:6px 14px;border-radius:16px;background:rgba(255,255,255,.65);white-space:nowrap}
+.tg.no{background:transparent;border:1px solid rgba(45,35,8,.3);font-weight:600}
+.yel .ft{margin-top:auto;padding-top:14px;display:flex;justify-content:space-between;align-items:center}
+.src{font-size:13px;font-weight:600;opacity:.75}
+.light{background:#e1eae2;box-shadow:0 18px 36px rgba(40,70,50,.14)}
+.days{display:flex;justify-content:space-between;margin:20px 0 12px}
+.days span{font-size:13px;font-weight:600;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;color:#4b5f50}
+.days span.on{background:#14231a;color:#fff}
+.light svg{width:100%;height:auto}
+.axis{display:flex;justify-content:space-between;font-size:13px;font-weight:500;color:#70847a;padding-top:8px}
+.li{background:var(--card2);border-radius:16px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.li b{display:block;font-size:15px;font-weight:700}
+.li small{font-size:13px;color:var(--muted)}
+.chip{font-size:13px;font-weight:600;background:#ecf2ec;border-radius:12px;padding:5px 14px}
+.stamp{padding:36px var(--pad) 40px;font-size:13px;font-weight:500;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="top">
+    <div class="hero-bg"></div>
+
+    <div class="nav z">
+      <div class="logo"><i></i>Stasiun Cuaca</div>
+      <div class="sep"></div>
+      <a class="on"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 2 12h3v8h5v-5h4v5h5v-8h3z"/></svg>Beranda</a>
+      <a><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 20V10h3v10zm6 0V4h3v16zm6 0v-7h3v7z"/></svg>Riwayat</a>
+      <a><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v4H4zm0 6h10v4H4zm0 6h16v4H4z"/></svg>Evaluasi</a>
+      <a><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 18c4-12 6-12 9 0 3 12 5 12 9 0v2c-4 8-6 8-9-2-3-10-5-10-9 0z"/></svg>Fuzzy</a>
+      <a><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 3h6v3h3v15H6V6h3zm2 1v2h2V4z"/></svg>Perangkat</a>
+      <div class="sp"></div>
+      <div class="pill"><span class="dot"></span>stasiun-01 · Online</div>
+      <div class="ic w">☾</div>
+    </div>
+
+    <div class="hero z">
+      <div>
+        <div class="main">
+          <svg class="ring" viewBox="0 0 210 210" aria-label="Peluang hujan 72 persen">
+            <defs><linearGradient id="ra" x1="0" x2="1" y1="1" y2="0"><stop offset="0" stop-color="#8cff9a"/><stop offset=".55" stop-color="#ffd84a"/><stop offset="1" stop-color="#ff8a5a"/></linearGradient></defs>
+            <circle cx="105" cy="105" r="86" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="20" stroke-linecap="round" stroke-dasharray="405 540" transform="rotate(135 105 105)"/>
+            <circle cx="105" cy="105" r="86" fill="none" stroke="url(#ra)" stroke-width="20" stroke-linecap="round" stroke-dasharray="292 540" transform="rotate(135 105 105)"/>
+            <text x="105" y="118" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="58" font-weight="800">72<tspan font-size="24" font-weight="700" dx="2">%</tspan></text>
+            <text x="105" y="142" text-anchor="middle" fill="rgba(255,255,255,.75)" font-family="Plus Jakarta Sans,sans-serif" font-size="13" font-weight="600">peluang hujan</text>
+          </svg>
+          <div class="info">
+            <div class="eyebrow">3 jam ke depan · 21.00–00.00 WIB</div>
+            <div class="lead">Kemungkinan besar<br>akan turun hujan</div>
+            <div class="pills"><span class="pl w"><i></i>BMKG juga memperkirakan hujan</span><span class="pl"><i class="y"></i>Saat ini masih kering</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stn">
+        <svg viewBox="0 0 330 330">
+          <defs>
+            <linearGradient id="metal" x1="0" x2="1"><stop offset="0" stop-color="#f2f5f2"/><stop offset="1" stop-color="#b9c3bb"/></linearGradient>
+            <linearGradient id="plate" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#27412f"/><stop offset="1" stop-color="#0f2216"/></linearGradient>
+          </defs>
+          <ellipse cx="170" cy="312" rx="125" ry="12" fill="rgba(0,0,0,.18)"/>
+          <rect x="163" y="64" width="9" height="236" rx="4" fill="url(#metal)"/>
+          <g class="float"><g transform="translate(167 40)">
+            <g stroke="#ffe27a" stroke-width="2.5" stroke-linecap="round">
+              <line class="ray" x1="0" y1="-26" x2="0" y2="-38"/>
+              <line class="ray" x1="-20" y1="-20" x2="-28" y2="-29" style="animation-delay:.3s"/>
+              <line class="ray" x1="20" y1="-20" x2="28" y2="-29" style="animation-delay:.6s"/>
+              <line class="ray" x1="-28" y1="-4" x2="-40" y2="-8" style="animation-delay:.9s"/>
+              <line class="ray" x1="28" y1="-4" x2="40" y2="-8" style="animation-delay:1.2s"/>
+            </g>
+            <path d="M-20 14a20 20 0 0 1 40 0z" fill="#fff" stroke="#c8d2c9"/>
+            <rect x="-22" y="14" width="44" height="7" rx="3" fill="url(#metal)"/>
+          </g></g>
+          <g transform="translate(167 108)">
+            <rect x="-34" y="0" width="68" height="9" rx="4" fill="#f4f7f4" stroke="#c8d2c9"/>
+            <rect x="-34" y="13" width="68" height="9" rx="4" fill="#eef2ee" stroke="#c8d2c9"/>
+            <rect x="-34" y="26" width="68" height="9" rx="4" fill="#e6ece6" stroke="#c8d2c9"/>
+            <rect x="-34" y="39" width="68" height="9" rx="4" fill="#dde5de" stroke="#c8d2c9"/>
+          </g>
+          <g transform="translate(185 178)">
+            <rect width="38" height="26" rx="5" fill="#1d3b27"/>
+            <rect x="6" y="6" width="26" height="14" rx="3" fill="#2e5a3d"/>
+            <circle cx="19" cy="13" r="3" fill="#7dff8a" class="led"/>
+          </g>
+          <line x1="172" y1="191" x2="185" y2="191" stroke="#b9c3bb" stroke-width="4"/>
+          <g transform="translate(70 196) rotate(-14)">
+            <rect width="86" height="54" rx="7" fill="url(#plate)" stroke="#cfd9d1" stroke-width="2"/>
+            <path d="M8 8h70M8 18h70M8 28h70M8 38h70M8 48h70" stroke="#8fd3a0" stroke-width="1.6" fill="none" opacity=".8" stroke-dasharray="3 3"/>
+          </g>
+          <line x1="150" y1="248" x2="163" y2="246" stroke="#b9c3bb" stroke-width="4"/>
+          <g fill="#aee3ff">
+            <ellipse class="drop" cx="88" cy="132" rx="2.4" ry="4.4"/>
+            <ellipse class="drop" cx="104" cy="126" rx="2.4" ry="4.4"/>
+            <ellipse class="drop" cx="120" cy="136" rx="2.4" ry="4.4"/>
+            <ellipse class="drop" cx="136" cy="128" rx="2.4" ry="4.4"/>
+            <ellipse class="drop" cx="96" cy="140" rx="2.4" ry="4.4"/>
+          </g>
+          <g transform="translate(205 232)">
+            <rect width="82" height="62" rx="9" fill="url(#metal)" stroke="#aeb9b0"/>
+            <rect x="8" y="9" width="66" height="30" rx="4" fill="#173625"/>
+            <rect x="14" y="15" width="22" height="9" rx="2" fill="#2f6a46"/>
+            <text x="41" y="33" font-size="8" fill="#9fe3b0" font-family="monospace">ESP32</text>
+            <circle cx="16" cy="51" r="3" fill="#7dff8a" class="led"/>
+            <circle cx="28" cy="51" r="3" fill="#ffc93c" class="led" style="animation-delay:.5s"/>
+          </g>
+          <line x1="172" y1="262" x2="205" y2="262" stroke="#b9c3bb" stroke-width="4"/>
+          <g transform="translate(296 224)" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round">
+            <path class="wave" d="M-14 0a20 20 0 0 1 28 0"/>
+            <path class="wave" d="M-9 5a13 13 0 0 1 18 0"/>
+            <path class="wave" d="M-4 10a6 6 0 0 1 8 0"/>
+            <circle cy="15" r="2" fill="#fff"/>
+          </g>
+        </svg>
+        <div class="tag" style="left:54%;top:-4%"><i></i>BH1750 <em>Cahaya</em></div>
+        <div class="tag" style="right:-6%;top:33%"><i></i>DHT22 <em>Suhu &amp; RH</em></div>
+        <div class="tag" style="right:-2%;top:53%"><i></i>BMP280 <em>Tekanan</em></div>
+        <div class="tag" style="left:-4%;top:51%"><i></i>FC-37 <em>Hujan</em></div>
+      </div>
+    </div>
+
+    <div class="stats z">
+      <div class="stat"><div class="l"><b></b>Suhu</div><div class="v num">27,4<small>°C</small></div></div>
+      <div class="stat"><div class="l"><b></b>Kelembapan</div><div class="v num">81<small>%</small></div></div>
+      <div class="stat"><div class="l"><b></b>Tekanan</div><div class="v num">985,3<small>hPa</small></div></div>
+      <div class="stat"><div class="l"><b></b>Cahaya</div><div class="v num">12.450<small>lux</small></div></div>
+      <div class="stat"><div class="l"><b></b>Titik embun</div><div class="v num">24,1<small>°C</small></div></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card dark">
+      <h3>Riwayat peluang hujan</h3>
+      <div class="sub">6 jam terakhir · config v1</div>
+      <svg viewBox="0 0 400 180">
+        <defs><linearGradient id="gf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9b23a" stop-opacity=".5"/><stop offset="1" stop-color="#d9b23a" stop-opacity="0"/></linearGradient></defs>
+        <g stroke="rgba(255,255,255,.1)" stroke-dasharray="3 6"><path d="M0 30H400M0 90H400M0 150H400"/></g>
+        <path d="M0 140C60 134 90 122 130 116S200 104 250 80 340 50 400 40V180H0Z" fill="url(#gf)"/>
+        <path d="M0 140C60 134 90 122 130 116S200 104 250 80 340 50 400 40" fill="none" stroke="#d9b23a" stroke-width="2" stroke-dasharray="6 5"/>
+        <path d="M0 116C60 106 100 84 140 80S210 66 260 54 340 30 400 22" fill="none" stroke="#8fe39a" stroke-width="3"/>
+        <line x1="260" y1="14" x2="260" y2="180" stroke="#fff" stroke-opacity=".5"/>
+        <circle cx="260" cy="54" r="6" fill="#fff"/>
+        <g transform="translate(200 -2)"><rect width="124" height="28" rx="14" fill="#e9f7e6"/><circle cx="16" cy="14" r="6" fill="#47b05a"/><text x="30" y="19" font-size="13" font-weight="700" fill="#123" font-family="Plus Jakarta Sans,sans-serif">72% sekarang</text></g>
+      </svg>
+      <div class="xs"><span>−6 jam</span><span>sekarang</span></div>
+    </div>
+
+    <div class="card yel">
+      <h3>Prakiraan BMKG</h3>
+      <div class="sub">Slot saat ini dan dua slot berikutnya</div>
+      <div style="margin-top:10px">
+        <div class="slot"><div><div class="t">20.00–23.00 WIB</div><b>Hujan Ringan</b></div><span class="tg">Hujan</span></div>
+        <div class="slot"><div><div class="t">23.00–02.00 WIB</div><b>Berawan</b></div><span class="tg no">Tidak</span></div>
+        <div class="slot"><div><div class="t">02.00–05.00 WIB</div><b>Cerah Berawan</b></div><span class="tg no">Tidak</span></div>
+      </div>
+      <div class="ft"><span class="src">Sumber: BMKG</span></div>
+    </div>
+
+    <div class="card light">
+      <h3>Aktivitas hujan</h3>
+      <div class="sub">Menit basah per hari</div>
+      <div class="days"><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span class="on">Jum</span><span>Sab</span></div>
+      <svg viewBox="0 0 380 120">
+        <g stroke="#c4d2c7"><path d="M0 24H380M0 60H380M0 96H380"/></g>
+        <rect x="150" y="8" width="58" height="108" rx="10" fill="#b0c8b5" opacity=".55"/>
+        <path d="M0 90C40 82 60 56 100 64S150 104 190 70 250 30 290 54 350 94 380 80" fill="none" stroke="#1e2c24" stroke-width="2.4"/>
+        <circle cx="190" cy="70" r="7" fill="#2c7fb0"/>
+      </svg>
+      <div class="axis"><span>12.00</span><span>14.00</span><span>16.00</span><span>18.00</span><span>20.00</span></div>
+      <div class="li"><div><b>Hujan 14.20–15.05</b><small>38 menit basah</small></div><span class="chip">Selesai</span></div>
+    </div>
+  </div>
+
+  <div class="stamp">Data terakhir 20.57 WIB · Semua waktu dalam WIB</div>
+</div>
+</body>
+</html>
