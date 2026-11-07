@@ -13,4 +13,14 @@ describe('createRateLimiter', () => {
     t += 60001;
     expect(rl('a').allowed).toBe(true);
   });
+
+  it('prunes expired keys', () => {
+    let t = 0;
+    const rl = createRateLimiter({ windowMs: 1000, max: 1, now: () => t });
+    for (let i = 0; i < 50; i++) rl(`k${i}`);
+    expect(rl.size()).toBe(50);
+    t += 2000;
+    rl('fresh');
+    expect(rl.size()).toBe(1);
+  });
 });

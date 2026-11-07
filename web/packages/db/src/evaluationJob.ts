@@ -25,9 +25,7 @@ export async function recomputeEvaluation(db: Db, o: RecomputeOpts): Promise<{ s
     .orderBy(asc(bmkgForecasts.utcDatetime));
   const utcs = [...new Set(forecasts.map((f) => f.utcDatetime.getTime()))].sort((a, b) => a - b);
 
-  await db.delete(evaluationSlots).where(and(
-    eq(evaluationSlots.deviceId, o.deviceId), gte(evaluationSlots.slotStart, o.from), lt(evaluationSlots.slotStart, o.to),
-  ));
+  // tanpa prakiraan di rentang: jangan hapus hasil yang sudah ada
   if (utcs.length === 0) return { slots: 0 };
 
   const bounds = utcs.map((u) => slotBounds(new Date(u), o.slotMode));
@@ -64,8 +62,13 @@ export async function recomputeEvaluation(db: Db, o: RecomputeOpts): Promise<{ s
       bmkgCorrect: correct(bmkgPredictRain),
     };
   });
+  await db.transaction(async (tx) => {
+  const t = tx as unknown as Db;
+  await t.delete(evaluationSlots).where(and(
+    eq(evaluationSlots.deviceId, o.deviceId), gte(evaluationSlots.slotStart, o.from), lt(evaluationSlots.slotStart, o.to),
+  ));
   for (let i = 0; i < rows.length; i += 500) {
-    await db.insert(evaluationSlots).values(rows.slice(i, i + 500)).onConflictDoUpdate({
+    await t.insert(evaluationSlots).values(rows.slice(i, i + 500)).onConflictDoUpdate({
       target: [evaluationSlots.deviceId, evaluationSlots.slotStart],
       set: {
         slotEnd: sqlExcluded('slot_end'), wetMinutes: sqlExcluded('wet_minutes'), dataMinutes: sqlExcluded('data_minutes'),
@@ -76,6 +79,7 @@ export async function recomputeEvaluation(db: Db, o: RecomputeOpts): Promise<{ s
       },
     });
   }
+  });
   return { slots: rows.length };
 }
 

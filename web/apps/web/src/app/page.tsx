@@ -1,5 +1,6 @@
 import { formatWib } from '@ws/core';
 import { getBmkgSlots, getDeviceStatus, getLatestPrediction, getLatestReading, getRainIntervals, getSeries } from '@ws/db';
+import { selectCurrentSlots } from '@/lib/currentSlots';
 import { getDb } from '@/lib/db';
 import { getEnv } from '@/lib/env';
 import { NavBar } from '@/components/NavBar';
@@ -15,15 +16,15 @@ export default async function Home() {
   const env = getEnv();
   const db = getDb();
   const now = new Date();
-  const slotStart = new Date(Math.floor(now.getTime() / (3 * 3600_000)) * 3 * 3600_000);
-  const [reading, prediction, device, slots, series, intervals] = await Promise.all([
+  const [reading, prediction, device, allSlots, series, intervals] = await Promise.all([
     getLatestReading(db, env.deviceId),
     getLatestPrediction(db, env.deviceId),
     getDeviceStatus(db, env.deviceId, env.offlineAfterSec, now),
-    getBmkgSlots(db, env.adm4, slotStart, 3),
+    getBmkgSlots(db, env.adm4, new Date(now.getTime() - 4 * 3600_000), 6),
     getSeries(db, env.deviceId, new Date(now.getTime() - 6 * 3600_000), now),
     getRainIntervals(db, env.deviceId, new Date(now.getTime() - 6 * 86400_000), now),
   ]);
+  const slots = selectCurrentSlots(allSlots, now, env.slotMode, 3);
   const points = series.predictions.filter((p) => p.status === 'ok' && p.probability != null).map((p) => ({ t: p.ts.getTime(), p: p.probability as number }));
   const seen = device.lastSeenAt ?? reading?.ts ?? null;
 
@@ -37,6 +38,7 @@ export default async function Home() {
             wsUrl={env.publicWsUrl}
             bmkgNow={slots[0] ? { weatherCode: slots[0].weatherCode, weatherDesc: slots[0].weatherDesc } : null}
             threshold={env.predictThreshold}
+            offlineAfterSec={env.offlineAfterSec}
           />
         </PageShell>
       </HeroBand>

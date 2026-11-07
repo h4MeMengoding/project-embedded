@@ -1,15 +1,16 @@
 const TZ = 'Asia/Jakarta';
 
+const f = new Intl.DateTimeFormat('id-ID', {
+  timeZone: TZ,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
+
 function parts(d: Date) {
-  const f = new Intl.DateTimeFormat('id-ID', {
-    timeZone: TZ,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  });
   const o: Record<string, string> = {};
   for (const p of f.formatToParts(d)) o[p.type] = p.value;
   return o;

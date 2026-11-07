@@ -64,4 +64,12 @@ describe.skipIf(!HAS_DB)('evaluation job', () => {
     expect(ev.fuzzy.metrics.n).toBe(2);
     expect(ev.bmkg.metrics.n).toBe(1);
   });
+
+  it('does not wipe existing slots when range has no bmkg forecasts', async () => {
+    const before = await getEvaluation(db, dev, T1, new Date(T3.getTime() + 3 * H));
+    expect(before.slots.length).toBeGreaterThan(0);
+    await recomputeEvaluation(db, { ...opts(), adm4: `none-${rnd()}` });
+    const after = await getEvaluation(db, dev, T1, new Date(T3.getTime() + 3 * H));
+    expect(after.slots).toHaveLength(before.slots.length);
+  });
 });
