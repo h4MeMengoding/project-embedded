@@ -9,7 +9,7 @@ export function Assumptions({ minWet, threshold, slotMode }: { minWet: number; t
         <li>Slot dengan data menit &lt; 80% (kurang dari 144 dari 180 menit) ditandai “data tidak lengkap” dan dikecualikan dari metrik.</li>
         <li>Ambang prediksi fuzzy: peluang ≥ {threshold}% dihitung memprediksi hujan.</li>
         <li>Mode slot BMKG: <b>{slotMode}</b> — {slotMode === 'start' ? 'prakiraan pada waktu T berlaku untuk [T, T+3 jam)' : 'prakiraan pada waktu T berlaku untuk [T−1,5 jam, T+1,5 jam)'}.</li>
-        <li>Prakiraan BMKG yang dipakai: analysis_date terbaru yang terbit sebelum awal slot. Prediksi fuzzy: menit awal slot (atau menit valid terdekat sebelumnya, maksimal 10 menit).</li>
+        <li>Prakiraan BMKG yang dipakai: analysis_date terbaru yang terbit sebelum awal slot. Prediksi fuzzy: menit valid terakhir sebelum awal slot (maksimal 10 menit sebelumnya); menit awal slot sendiri tidak dipakai karena mencakup data sesudah awal slot.</li>
       </ul>
       <h4 style={{ fontWeight: 700, marginTop: 16 }}>Pemetaan cuaca BMKG → prediksi hujan</h4>
       <table style={{ marginTop: 8, borderCollapse: 'collapse' }}>

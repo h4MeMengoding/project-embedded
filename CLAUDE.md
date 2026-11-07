@@ -324,7 +324,7 @@ Format: JIKA ΔP3h = X DAN RH = Y DAN DPD = Z MAKA Peluang = W.
 - Jika data menit dalam slot < 80% (kurang dari 144 dari 180 menit) → `actual_rain = null` dan slot **dikecualikan** dari metrik (tetap ditampilkan dengan tanda "data tidak lengkap").
 
 ### 9.3 Prediksi yang dibandingkan
-- **Fuzzy:** prediksi yang dibuat pada menit `slot_start` (atau menit valid terdekat **sebelum** `slot_start`, maksimal 10 menit sebelumnya). Tidak boleh memakai data setelah `slot_start`.
+- **Fuzzy:** prediksi yang dibuat pada menit valid terakhir **sebelum** `slot_start` (maksimal 10 menit sebelumnya). Menit `slot_start` sendiri tidak dipakai karena record menit itu mencakup 60 detik setelah `slot_start`. Tidak boleh memakai data setelah `slot_start`.
 - **BMKG:** prakiraan untuk slot tersebut dari `analysis_date` **terbaru yang terbit sebelum `slot_start`**.
 
 ### 9.4 Metrik

@@ -26,7 +26,7 @@ export function labelActualRain(
   return { wetMinutes, dataMinutes, actualRain };
 }
 
-/** Prediksi 'ok' terbaru pada atau sebelum slotStart, maksimal 10 menit sebelumnya. Tidak pernah memakai data sesudahnya. */
+/** Prediksi 'ok' terbaru sebelum slotStart (menit slotStart sendiri mencakup 60 dtk sesudahnya, jadi dikecualikan), maksimal 10 menit sebelumnya. */
 export function pickFuzzyPrediction<T extends { ts: Date; status: string }>(
   preds: T[],
   slotStart: Date,
@@ -35,7 +35,7 @@ export function pickFuzzyPrediction<T extends { ts: Date; status: string }>(
   let best: T | null = null;
   for (const p of preds) {
     const t = p.ts.getTime();
-    if (p.status !== 'ok' || t > s || t < s - 10 * MIN) continue;
+    if (p.status !== 'ok' || t >= s || t < s - 10 * MIN) continue;
     if (!best || t > best.ts.getTime()) best = p;
   }
   return best;

@@ -54,7 +54,9 @@ describe('labelActualRain', () => {
 describe('pickFuzzyPrediction', () => {
   const start = d('2026-11-07T14:00:00Z');
   const p = (offMin: number, status = 'ok') => ({ ts: new Date(start.getTime() + offMin * MIN), status });
-  it('exact', () => expect(pickFuzzyPrediction([p(-3), p(0)], start)).toEqual(p(0)));
+  it('prediction at slotStart not used (its minute row spans after slotStart)', () =>
+    expect(pickFuzzyPrediction([p(-3), p(0)], start)).toEqual(p(-3)));
+  it('one minute before is used', () => expect(pickFuzzyPrediction([p(-1)], start)).toEqual(p(-1)));
   it('nearest before within 10', () => expect(pickFuzzyPrediction([p(-10), p(-4)], start)).toEqual(p(-4)));
   it('11 min before -> null', () => expect(pickFuzzyPrediction([p(-11)], start)).toBeNull());
   it('never after', () => expect(pickFuzzyPrediction([p(1), p(5)], start)).toBeNull());
