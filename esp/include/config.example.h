@@ -6,9 +6,13 @@
 #define WIFI_PASS "password-wifi"
 
 // ---- Server ----
-// Produksi: https://domain-anda/api/device/ingest (sertifikat diverifikasi dengan ROOT_CA di bawah).
-// Uji lokal tanpa TLS: http://<ip-laptop>:3000/api/device/ingest
-#define API_URL "https://domain-anda/api/device/ingest"
+// WebSocket ke wss://WS_HOST:WS_PORT/WS_PATH. Produksi (lewat Caddy): WS_TLS 1, port 443,
+// sertifikat diverifikasi dengan ROOT_CA di bawah.
+// Uji lokal tanpa TLS: WS_TLS 0, WS_HOST "<ip-laptop>", WS_PORT 3000.
+#define WS_HOST "domain-anda"
+#define WS_PORT 443
+#define WS_PATH "/ws/device"
+#define WS_TLS 1
 #define DEVICE_ID "stasiun-01"
 // Dari: npm run device:create -- --id stasiun-01 (di folder web/)
 #define DEVICE_TOKEN "isi-token-dari-device-create"
@@ -26,7 +30,7 @@
 #define TEST_MODE 0
 #endif
 
-// Root CA untuk HTTPS. Default: ISRG Root X1 (Let's Encrypt, dipakai Caddy), berlaku s.d. 2035-06-04.
+// Root CA untuk WSS. Default: ISRG Root X1 (Let's Encrypt, dipakai Caddy), berlaku s.d. 2035-06-04.
 // SHA-256: 96:BC:EC:06:26:49:76:F3:74:60:77:9A:CF:28:C5:A7:CF:E8:A3:C0:AA:E1:1A:8F:FC:EE:05:C0:BD:DF:08:C6
 // Ganti jika domain lewat proxy Cloudflare atau memakai CA lain.
 static const char ROOT_CA[] = R"PEM(

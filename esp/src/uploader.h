@@ -2,15 +2,17 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-// Pengirim record persisten (minute, rain_event) ke POST API_URL dengan store-and-forward LittleFS.
-// HTTP 200 = semua record di request tersimpan di server (server idempoten), jadi tidak perlu seq/ACK.
+// Pengirim record persisten (minute, rain_event) lewat WebSocket ke wss://WS_HOST/WS_PATH dengan store-and-forward LittleFS.
+// Setiap batch record membawa `id`; server membalas ack setelah tersimpan (idempoten, kirim ulang aman).
+// Tanpa ack (putus / timeout), batch dikembalikan ke file dan dikirim ulang sebagai backfill.
 
-using StatusFiller = void (*)(JsonObject status);
+// Mengisi objek akar payload dengan "status" dan "live" (sampel 10 detik terakhir).
+using StatusFiller = void (*)(JsonObject root);
 
 void uploaderBegin(StatusFiller fill);
 // Record JSON satu objek (tanpa newline). Masuk antrean RAM; jika penuh langsung ke file.
 void uploaderEnqueue(const String& record);
-// Panggil di loop. minuteDue=true sekali per menit: kirim antrean RAM (atau status saja sebagai heartbeat).
-void uploaderTick(bool minuteDue);
+// Panggil di loop (menjalankan klien WebSocket). sendNow=true tiap sampel (10 dtk): heartbeat status + live + antrean RAM.
+void uploaderTick(bool sendNow);
 uint32_t uploaderBacklog();
 bool uploaderBufferFull();

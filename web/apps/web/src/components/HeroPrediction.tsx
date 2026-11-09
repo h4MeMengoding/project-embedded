@@ -1,10 +1,11 @@
 import { formatWib } from '@ws/core';
+import type { SensorFlags } from '@ws/core';
 import type { HomeState } from '../lib/homeState';
 import { RingGauge } from './RingGauge';
 import { Pill } from './Pill';
 import { StationIllustration } from './StationIllustration';
 
-export function HeroPrediction({ state, predictionTs }: { state: HomeState; predictionTs: Date | null }) {
+export function HeroPrediction({ state, predictionTs, sensors }: { state: HomeState; predictionTs: Date | null; sensors: SensorFlags | null }) {
   if (state.kind === 'empty') {
     return (
       <div className="hero">
@@ -34,7 +35,7 @@ export function HeroPrediction({ state, predictionTs }: { state: HomeState; pred
           </div>
         </div>
       </div>
-      <StationIllustration online={state.kind !== 'offline'} />
+      <StationIllustration online={state.kind !== 'offline'} sensors={sensors} />
     </div>
   );
 }

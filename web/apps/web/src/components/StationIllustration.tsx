@@ -1,4 +1,16 @@
-export function StationIllustration({ online = true }: { online?: boolean }) {
+import type { SensorFlags } from '@ws/core';
+
+// Label sensor: hijau = terbaca, merah "Error" = tidak terbaca, abu-abu saat perangkat offline.
+function Tag({ ok, label, desc, style }: { ok: boolean | undefined; label: string; desc: string; style: React.CSSProperties }) {
+  const err = ok === false;
+  return (
+    <div className={`tag${err ? ' err' : ''}`} style={style}>
+      <i />{label} <em>{err ? 'Error' : desc}</em>
+    </div>
+  );
+}
+
+export function StationIllustration({ online = true, sensors = null }: { online?: boolean; sensors?: SensorFlags | null }) {
   const led = online ? '#7dff8a' : '#8a9a8f';
   return (
     <div className={`stn${online ? '' : ' off'}`} aria-hidden="true">
@@ -71,10 +83,10 @@ export function StationIllustration({ online = true }: { online?: boolean }) {
           </g>
         )}
       </svg>
-      <div className="tag" style={{ left: '54%', top: '-4%' }}><i />BH1750 <em>Cahaya</em></div>
-      <div className="tag" style={{ right: '-6%', top: '33%' }}><i />DHT22 <em>Suhu &amp; RH</em></div>
-      <div className="tag" style={{ right: '-2%', top: '53%' }}><i />BMP280 <em>Tekanan</em></div>
-      <div className="tag" style={{ left: '-4%', top: '51%' }}><i />FC-37 <em>Hujan</em></div>
+      <Tag ok={online ? sensors?.bh1750 : undefined} label="BH1750" desc="Cahaya" style={{ left: '54%', top: '-4%' }} />
+      <Tag ok={online ? sensors?.dht22 : undefined} label="DHT22" desc="Suhu & RH" style={{ right: '-6%', top: '33%' }} />
+      <Tag ok={online ? sensors?.bmp280 : undefined} label="BMP280" desc="Tekanan" style={{ right: '-2%', top: '53%' }} />
+      <Tag ok={online ? sensors?.rain : undefined} label="FC-37" desc="Hujan" style={{ left: '-4%', top: '51%' }} />
     </div>
   );
 }

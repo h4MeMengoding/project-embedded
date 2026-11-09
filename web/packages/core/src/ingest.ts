@@ -1,4 +1,4 @@
-/** Validasi payload POST /api/device/ingest (ESP32 → server). Murni, tanpa I/O. */
+/** Validasi payload perangkat (pesan WebSocket /ws/device, ESP32 → server). Murni, tanpa I/O. */
 
 export type SensorFlags = { dht22: boolean; bmp280: boolean; bh1750: boolean; rain: boolean };
 export type IngestStatus = {
@@ -12,7 +12,12 @@ export type MinuteRecord = {
 };
 export type RainEventRecord = { type: 'rain_event'; ts: number; state: 'start' | 'stop'; backfill: boolean };
 export type IngestRecord = MinuteRecord | RainEventRecord;
-export type IngestPayload = { device_id: string; fw: string; status: IngestStatus; records: IngestRecord[] };
+/** Sampel 10 detik terakhir untuk tampilan realtime (tidak disimpan ke database). */
+export type LiveSample = {
+  ts: number | null; temp_dht: number | null; hum_dht: number | null; temp_bmp: number | null;
+  pressure_hpa: number | null; lux: number | null; rain_analog: number | null; rain_wet: boolean;
+};
+export type IngestPayload = { device_id: string; fw: string; status: IngestStatus; records: IngestRecord[]; live: LiveSample | null };
 
 export const INGEST_MAX_RECORDS = 60;
 const MIN_TS = 1735689600; // 2025-01-01T00:00:00Z: sebelum ini jam perangkat belum valid
@@ -80,7 +85,17 @@ export function parseIngestPayload(body: unknown, nowSec: number):
         rain_wet_seconds: int(r, 'rain_wet_seconds', 0, 60), samples: int(r, 'samples', 0, 6),
       };
     });
-    return { ok: true, value: { device_id: str(b, 'device_id', 64), fw: str(b, 'fw', 32), status, records } };
+    let live: LiveSample | null = null;
+    if (b.live != null) {
+      const l = obj(b.live, 'live');
+      live = {
+        ts: l.ts == null ? null : int(l, 'ts', MIN_TS, maxTs),
+        temp_dht: numN(l, 'temp_dht', -40, 80), hum_dht: numN(l, 'hum_dht', 0, 100),
+        temp_bmp: numN(l, 'temp_bmp', -40, 85), pressure_hpa: numN(l, 'pressure_hpa', 300, 1100),
+        lux: numN(l, 'lux', 0, 200000), rain_analog: numN(l, 'rain_analog', 0, 4095), rain_wet: bool(l, 'rain_wet'),
+      };
+    }
+    return { ok: true, value: { device_id: str(b, 'device_id', 64), fw: str(b, 'fw', 32), status, records, live } };
   } catch (e) {
     if (e instanceof Bad) return { ok: false, error: e.message };
     throw e;

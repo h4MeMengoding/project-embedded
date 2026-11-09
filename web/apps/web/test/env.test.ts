@@ -9,10 +9,9 @@ describe('getEnv', () => {
     expect(e.adm4).toBe('SEED');
     expect(e.predictThreshold).toBe(50);
     expect(e.rainMinWetMinutes).toBe(10);
-    expect(e.offlineAfterSec).toBe(180);
+    expect(e.offlineAfterSec).toBe(30);
     expect(e.slotMode).toBe('start');
     expect(e.evalStart).toBeNull();
-    expect(e.publicWsUrl).toBeNull();
   });
   it('threshold override', () => expect(getEnv({ ...base, PREDICT_THRESHOLD: '60' }).predictThreshold).toBe(60));
   it('bad slot mode names variable', () =>

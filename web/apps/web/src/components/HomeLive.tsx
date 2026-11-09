@@ -8,17 +8,16 @@ import { useLive } from '../hooks/useLive';
 import { HeroPrediction } from './HeroPrediction';
 import { SensorStrip } from './SensorStrip';
 
-export function HomeLive({ initial, wsUrl, bmkgNow, threshold, offlineAfterSec }: {
+export function HomeLive({ initial, bmkgNow, threshold, offlineAfterSec }: {
   initial: LiveData;
-  wsUrl: string | null;
   bmkgNow: { weatherCode: number | null; weatherDesc: string | null; slotLabel?: string | null } | null;
   threshold: number;
   offlineAfterSec: number;
 }) {
-  const raw = useLive(initial, wsUrl);
+  const raw = useLive(initial);
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 15_000);
+    const id = setInterval(() => setNow(new Date()), 5_000);
     return () => clearInterval(id);
   }, []);
   // status online dihitung ulang dari lastSeenAt supaya tidak macet "Online" bila WS terbuka tapi perangkat mati
@@ -49,7 +48,7 @@ export function HomeLive({ initial, wsUrl, bmkgNow, threshold, offlineAfterSec }
   }, [state]);
   return (
     <>
-      <HeroPrediction state={state} predictionTs={live.prediction?.ts ?? null} />
+      <HeroPrediction state={state} predictionTs={live.prediction?.ts ?? null} sensors={live.device.sensors ?? null} />
       <SensorStrip state={state} />
     </>
   );

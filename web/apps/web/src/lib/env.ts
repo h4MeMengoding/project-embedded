@@ -9,7 +9,6 @@ export type AppEnv = {
   calibStart: Date | null;
   calibEnd: Date | null;
   offlineAfterSec: number;
-  publicWsUrl: string | null;
 };
 
 type Source = Record<string, string | undefined>;
@@ -46,7 +45,6 @@ export function getEnv(src: Source = process.env): AppEnv {
     evalEnd: date(src, 'EVAL_END'),
     calibStart: date(src, 'CALIB_START'),
     calibEnd: date(src, 'CALIB_END'),
-    offlineAfterSec: num(src, 'DEVICE_OFFLINE_AFTER_SEC', 180),
-    publicWsUrl: src.PUBLIC_WS_URL?.trim() || null,
+    offlineAfterSec: num(src, 'DEVICE_OFFLINE_AFTER_SEC', 30),
   };
 }

@@ -48,5 +48,15 @@ describe('parseIngestPayload', () => {
     const c = base() as any; c.status.uptime_s = 1.5; err(c);
   });
   it('status.ts di luar rentang ditolak', () => { const b = base() as any; b.status.ts = 1e15; err(b); });
+  it('live opsional, nilai sensor terbaru', () => {
+    const b = { ...base(), records: [], live: { ts: NOW, temp_dht: null, hum_dht: null, temp_bmp: 27.9, pressure_hpa: 985.3, lux: null, rain_analog: 4095, rain_wet: false } };
+    const r = parseIngestPayload(b, NOW);
+    expect(r.ok && r.value.live).toEqual(b.live);
+    const r2 = parseIngestPayload(base(), NOW);
+    expect(r2.ok && r2.value.live).toBeNull();
+  });
+  it('live dengan nilai di luar rentang ditolak', () => {
+    err({ ...base(), live: { ts: NOW, temp_dht: null, hum_dht: 140, temp_bmp: null, pressure_hpa: null, lux: null, rain_analog: 1, rain_wet: false } });
+  });
   it('status tanpa sensors ditolak', () => { const b = base() as any; delete b.status.sensors; err(b); });
 });

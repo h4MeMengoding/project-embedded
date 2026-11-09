@@ -188,7 +188,9 @@ body {
 .stn.off .float, .stn.off .ray { animation: none; }
 .stn.off .ray { opacity: 0.35; }
 .stn.off .drop { animation: none; opacity: 0; }
-.stn.off .tag i { background: #e0764a; animation: none; }
+.stn .tag.err i { background: #e5484d; animation: blink 0.9s infinite; }
+.stn .tag.err em { color: #c62f34; font-weight: 700; }
+.stn.off .tag i { background: #8a9a8f; animation: none; }
 
 /* ===== HP (< 640px) ===== */
 @media (max-width: 639px) {

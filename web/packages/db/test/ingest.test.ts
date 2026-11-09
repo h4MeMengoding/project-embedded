@@ -17,7 +17,7 @@ const payload = (deviceId: string, records: IngestPayload['records']): IngestPay
   device_id: deviceId, fw: '1.0.0',
   status: { ts: T0, rssi: -60, uptime_s: 10, heap_free: 150000, backlog: 0, buffer_full: false, time_valid: true,
     sensors: { dht22: false, bmp280: true, bh1750: false, rain: true } },
-  records,
+  records, live: null,
 });
 
 describe.skipIf(!HAS_DB)('ingestPayload', () => {

@@ -1,8 +1,8 @@
 # Firmware ESP32 — Stasiun Cuaca
 
 PlatformIO, framework Arduino, board ESP32 DevKit V1 (`esp32doit-devkit-v1`).
-Baca sensor tiap 10 detik, rata-rata per menit, kirim ke server lewat **HTTPS POST** `API_URL` tiap menit.
-Saat offline, record disimpan di flash (`/pending.ndjson`, LittleFS, maks 1 MB) lalu dikirim ulang 50 per request.
+Baca sensor tiap 10 detik, rata-rata per menit, kirim ke server lewat **WebSocket (WSS)** `/ws/device`: heartbeat + nilai live tiap 10 detik, record menit dengan `ack`. ESP yang menyambung keluar, jadi boleh di belakang NAT/jaringan lain.
+Saat offline, record disimpan di flash (`/pending.ndjson`, LittleFS, maks 1 MB) lalu dikirim ulang 50 per pesan.
 
 ## Wiring
 
@@ -21,15 +21,15 @@ jadi DHT22/BH1750 bisa dicolok belakangan tanpa flash ulang. FC-37 (analog) sela
 
 ## Langkah
 
-1. Di `web/`: buat token perangkat (sekali; menjalankan lagi membuat token baru):
+1. Di `web/`: buat token perangkat. ID diambil dari `DEVICE_ID` di `web/.env.local`; perintah mencetak dua baris `#define` siap-salin (menjalankan lagi membuat token baru):
    ```bash
-   npm run device:create -- --id stasiun-01
+   npm run device:create
    ```
 2. Salin `include/config.example.h` ke `include/config.h` (di-gitignore), isi `WIFI_SSID`, `WIFI_PASS`,
-   `API_URL`, `DEVICE_ID`, `DEVICE_TOKEN`.
-   - Produksi: `https://domain-anda/api/device/ingest`. Sertifikat diverifikasi dengan `ROOT_CA`
+   `WS_HOST`, `WS_PORT`, `WS_PATH`, `WS_TLS`, `DEVICE_ID`, `DEVICE_TOKEN`.
+   - Produksi: `WS_TLS 1`, `WS_HOST "domain-anda"`, `WS_PORT 443`. Sertifikat diverifikasi dengan `ROOT_CA`
      (ISRG Root X1, Let's Encrypt/Caddy). Jika domain lewat proxy Cloudflare, ganti `ROOT_CA`.
-   - Uji lokal: `http://<ip-laptop>:3000/api/device/ingest` (laptop dan ESP32 di WiFi yang sama).
+   - Uji lokal: `WS_TLS 0`, `WS_HOST "<ip-laptop>"`, `WS_PORT 3000` (laptop dan ESP32 di WiFi yang sama).
 3. Flash dan pantau:
    ```bash
    pio run -t upload && pio device monitor
@@ -48,6 +48,7 @@ dan saat ditetesi air, pilih ambang di antaranya, isi `RAIN_WET_THRESHOLD` di `c
 - Sampel tiap 10 detik (selaras detik 0,10,…,50 saat jam valid). Rata-rata per menit dari sampel valid; field tanpa sampel valid → `null`.
 - `rain_wet_seconds` = jumlah sampel basah × 10. Event hujan `start`/`stop` setelah 3 sampel berturut-turut konsisten (30 detik).
 - Waktu dari NTP (`pool.ntp.org`, `id.pool.ntp.org`) saat boot dan tiap 6 jam, UTC. Sebelum jam valid (tahun < 2025) tidak ada record yang dibuat; status tetap dikirim.
-- Tiap menit satu request berisi status (RSSI, uptime, heap, backlog, `buffer_full`, sensor terhubung) dan record baru.
-  HTTP 200 = tersimpan. Gagal → record ke flash. 400/413 → batch dibuang (dicatat di Serial). 401 → token salah.
+- Satu koneksi WebSocket tetap terbuka (ping 15 detik, sambung ulang tiap 5 detik). Pesan pertama `hello` (device_id + token); token salah → server menutup (4401) dan Serial mencetak peringatan.
+- Tiap 10 detik satu pesan berisi status (RSSI, uptime, heap, backlog, `buffer_full`, sensor terhubung), `live` (sampel terakhir untuk dashboard realtime) dan record baru.
+  Batch record ber-`id`; tersimpan setelah server membalas `ack`. Putus atau ack tidak datang dalam 10 detik → record ke flash dan sambung ulang. `nack` permanen → batch dibuang (dicatat di Serial).
 - Watchdog 30 detik, WiFi reconnect dengan jeda 5 → 60 detik. Serial 115200.

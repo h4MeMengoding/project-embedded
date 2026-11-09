@@ -1,4 +1,4 @@
-// Stasiun cuaca ESP32: baca sensor tiap 10 detik, agregat per menit, kirim lewat HTTPS POST.
+// Stasiun cuaca ESP32: baca sensor tiap 10 detik, agregat per menit, kirim lewat WebSocket (WSS).
 // Spesifikasi: CLAUDE.md Bagian 4 dan web/docs/superpowers/specs/2026-11-09-esp-ingest-bmkg-design.md.
 #include <Arduino.h>
 #include <WiFi.h>
@@ -131,7 +131,16 @@ static bool handleSample(const Sample& s) {
   return closed;
 }
 
-static void fillStatus(JsonObject st) {
+static Sample lastSample;
+static bool haveSample = false;
+
+static void putNum(JsonObject o, const char* k, float v, int decimals) {
+  if (isnan(v)) o[k] = nullptr;
+  else { double p = pow(10, decimals); o[k] = round(v * p) / p; }
+}
+
+static void fillStatus(JsonObject root) {
+  JsonObject st = root["status"].to<JsonObject>();
   if (timeValid()) st["ts"] = (long long)time(nullptr);
   else st["ts"] = nullptr;
   st["rssi"] = WiFi.RSSI();
@@ -146,6 +155,17 @@ static void fillStatus(JsonObject st) {
   sn["bmp280"] = f.bmp280;
   sn["bh1750"] = f.bh1750;
   sn["rain"] = f.rain;
+  if (!haveSample) return;
+  JsonObject lv = root["live"].to<JsonObject>();
+  if (timeValid()) lv["ts"] = (long long)time(nullptr);
+  else lv["ts"] = nullptr;
+  putNum(lv, "temp_dht", lastSample.tDht, 2);
+  putNum(lv, "hum_dht", lastSample.hDht, 2);
+  putNum(lv, "temp_bmp", lastSample.tBmp, 2);
+  putNum(lv, "pressure_hpa", lastSample.pHpa, 2);
+  putNum(lv, "lux", lastSample.lux, 1);
+  lv["rain_analog"] = lastSample.rainAo;
+  lv["rain_wet"] = lastSample.wet;
 }
 
 // WiFi reconnect dengan backoff 5 → 60 detik.
@@ -198,25 +218,22 @@ void loop() {
     wasValid = valid;
   }
   bool due = valid ? (time(nullptr) / 10 != lastSlot) : (millis() - lastSampleMs >= SAMPLE_MS);
-  bool minuteDue = false;
+  bool sendNow = false;
   if (due) {
     lastSlot = time(nullptr) / 10;
     lastSampleMs = millis();
     Sample s = sensorsRead();
     sensorsPrint(s);
-    minuteDue = handleSample(s);
+    lastSample = s;
+    haveSample = true;
+    handleSample(s);
+    sendNow = true;  // heartbeat tiap sampel: status + live + record baru
   }
   if (millis() - lastRetryMs >= 60000) {
     lastRetryMs = millis();
     sensorsRetry();
   }
-  // Heartbeat status tetap terkirim walau jam belum valid (tanpa record).
-  static uint32_t lastHbMs = 0;
-  if (minuteDue || millis() - lastHbMs >= 65000) {
-    minuteDue = true;
-    lastHbMs = millis();
-  }
-  uploaderTick(minuteDue);
+  uploaderTick(sendNow);
   delay(50);
 }
 #endif

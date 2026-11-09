@@ -14,7 +14,7 @@ Proyek UAS sekaligus makalah jurnal (BEES: Bulletin of Electrical and Electronic
 
 **Inti sistem:**
 1. Stasiun cuaca mini berbasis ESP32 membaca suhu, kelembapan, tekanan udara, intensitas cahaya, dan status hujan.
-2. Data dikirim tiap menit ke server (VPS) lewat HTTPS POST dan disimpan ke database.
+2. Data dikirim ke server (VPS) lewat WebSocket (WSS) dan disimpan ke database (record per menit; nilai live tiap 10 detik).
 3. Server menghitung **prediksi peluang hujan 3 jam ke depan** dengan **logika fuzzy Mamdani**.
 4. Server mengambil **prakiraan cuaca BMKG** (per 3 jam) secara berkala dan menyimpannya.
 5. Prediksi fuzzy dan prakiraan BMKG **sama-sama dievaluasi terhadap kejadian hujan aktual** yang tercatat sensor hujan.
@@ -36,7 +36,7 @@ Proyek UAS sekaligus makalah jurnal (BEES: Bulletin of Electrical and Electronic
 | Sensor yang TIDAK dipakai | Anemometer, wind vane, rain gauge tipping bucket, SHT31 |
 | RTC | **Tidak dipakai** (keputusan 2026-11-09). Waktu hanya dari NTP |
 | Penyimpanan offline | **Flash internal ESP32 dengan LittleFS** (store-and-forward) |
-| Komunikasi | ESP32 → WiFi → **HTTPS POST** `/api/device/ingest` (route handler Next.js) tiap 1 menit (keputusan 2026-11-09, menggantikan WSS) |
+| Komunikasi | ESP32 → WiFi → **WebSocket (WSS)** `/ws/device` ke proses web (ESP yang membuka koneksi keluar, jadi tetap jalan di belakang NAT): `hello` (device_id + token), lalu heartbeat + nilai live tiap 10 detik dan record menit dengan ack; server → browser lewat **WebSocket** `/ws/live` (keputusan 2026-11-09: WSS menggantikan HTTPS POST + SSE) |
 | Server | **VPS milik pengguna** |
 | Database | **PostgreSQL** |
 | Dashboard | **Next.js** (App Router, TypeScript) |
@@ -54,14 +54,14 @@ Proyek UAS sekaligus makalah jurnal (BEES: Bulletin of Electrical and Electronic
 ## 2. Arsitektur
 
 ```
-[Sensor] → [ESP32] --HTTPS POST /api/device/ingest (tiap menit)--> [Next.js web] → [PostgreSQL]
+[Sensor] → [ESP32] --WSS /ws/device (heartbeat tiap 10 dtk, record per menit + ack)--> [Next.js web] → [PostgreSQL]
                                                                      ├─ simpan + hitung fuzzy per menit baru
                                                                      ├─ cron (instrumentation.ts): BMKG menit ke-5, evaluasi menit ke-10
-                                                                     └─ dashboard: server components + polling /api/live
-                                [Caddy] reverse proxy + HTTPS otomatis
+                                                                     └─ dashboard: server components + WebSocket /ws/live
+                                [Caddy] reverse proxy + HTTPS/WSS otomatis
 ```
 
-**Pembaruan 2026-11-09:** tidak ada ingest service terpisah dan tidak ada WebSocket. Penelitian tidak butuh data real-time (horizon 3 jam, rata-rata 10 menit, evaluasi per slot 3 jam), jadi ESP32 cukup mengirim satu request per menit. ACK = HTTP 200. Web berjalan terus di VPS, sehingga cron BMKG dan evaluasi dijalankan di proses Next.js (asumsi satu instance). Rancangan: `web/docs/superpowers/specs/2026-11-09-esp-ingest-bmkg-design.md`.
+**Pembaruan 2026-11-09:** tidak ada ingest service terpisah. WebSocket (`/ws/device`, `/ws/live`) berjalan di proses yang sama dengan Next.js lewat server kustom `web/apps/web/server.ts` (route handler Next tidak bisa menerima upgrade WebSocket; jalankan dengan `npm run dev` / `npm start`, bukan `next dev`). ESP32 yang menyambung keluar ke VPS, bukan sebaliknya, sehingga ESP boleh berada di jaringan lain di belakang NAT. Web berjalan terus di VPS, sehingga cron BMKG dan evaluasi dijalankan di proses yang sama (asumsi satu instance). Rancangan awal: `web/docs/superpowers/specs/2026-11-09-esp-ingest-bmkg-design.md` (bagian komunikasi sudah digantikan Bagian 5).
 
 ### 2.1 Struktur repositori (monorepo, npm workspaces)
 
@@ -91,7 +91,7 @@ Proyek UAS sekaligus makalah jurnal (BEES: Bulletin of Electrical and Electronic
    └─ fuzzy-explain/          # CLI cetak perhitungan fuzzy langkah demi langkah
 ```
 
-Teknologi: TypeScript di semua bagian Node, **Drizzle ORM**, **vitest**, **Tailwind CSS**, **Recharts** untuk grafik, tanpa WebSocket.
+Teknologi: TypeScript di semua bagian Node, **Drizzle ORM**, **vitest**, **Tailwind CSS**, **Recharts** untuk grafik, `ws` untuk WebSocket server.
 
 ---
 
@@ -113,12 +113,12 @@ Tabel wiring ini juga ada di `esp/README.md`.
 ## 4. Firmware ESP32 (`/esp`)
 
 **Platform:** PlatformIO, framework Arduino, board `esp32doit-devkit-v1`.
-**Library:** `adafruit/DHT sensor library`, `adafruit/Adafruit BMP280 Library`, `claws/BH1750`, `bblanchon/ArduinoJson` v7, `LittleFS`, `WiFiClientSecure`/`HTTPClient` (bawaan core).
-Partisi: pakai partisi bawaan 4MB (filesystem sekitar 1,5 MB).
+**Library:** `adafruit/DHT sensor library`, `adafruit/Adafruit BMP280 Library`, `claws/BH1750`, `bblanchon/ArduinoJson` v7, `links2004/WebSockets`, `LittleFS`.
+Partisi: `no_ota.csv` bawaan Arduino (app 2 MB, LittleFS ~1,9 MB). Firmware ~1,3 MB tidak muat di partisi default 1,25 MB; OTA tidak dipakai.
 
 ### 4.1 Konfigurasi
 File `include/config.h` (di-gitignore) dengan contoh `include/config.example.h`:
-`WIFI_SSID`, `WIFI_PASS`, `API_URL` (`https://domain/api/device/ingest`), `DEVICE_ID`, `DEVICE_TOKEN`, `RAIN_WET_THRESHOLD` (nilai ADC, default 2500, harus dikalibrasi), `FW_VERSION`, `TEST_MODE`, `ROOT_CA` (default ISRG Root X1).
+`WIFI_SSID`, `WIFI_PASS`, `WS_HOST`, `WS_PORT`, `WS_PATH` (`/ws/device`), `WS_TLS`, `DEVICE_ID`, `DEVICE_TOKEN`, `RAIN_WET_THRESHOLD` (nilai ADC, default 2500, harus dikalibrasi), `FW_VERSION`, `TEST_MODE`, `ROOT_CA` (default ISRG Root X1).
 
 **Sensor belum terpasang:** tiap sensor dideteksi saat boot dan dicoba ulang tiap 60 detik. Sensor yang tidak terhubung bernilai `null` dan dilaporkan "belum terhubung" (Serial, payload `status.sensors`, halaman Perangkat). FC-37 (analog) selalu dianggap terhubung.
 
@@ -128,7 +128,7 @@ File `include/config.h` (di-gitignore) dengan contoh `include/config.example.h`:
   - BMP280: tekanan dalam **hPa (tekanan stasiun/absolut, JANGAN dikonversi ke permukaan laut)** dan suhu.
   - BH1750: lux.
   - FC-37: nyalakan GPIO 25, tunggu 100 ms, baca AO (rata-rata 5 pembacaan), matikan GPIO 25. **Basah jika AO < `RAIN_WET_THRESHOLD`** (FC-37 bernilai lebih rendah saat basah).
-- **Status perangkat** (RSSI, uptime, heap, backlog, `buffer_full`, sensor terhubung) dikirim tiap menit bersama record (tidak ada pesan live 10 detik).
+- **Heartbeat tiap 10 detik:** status (RSSI, uptime, heap, backlog, `buffer_full`, sensor terhubung) + `live` (sampel terakhir, tidak disimpan) + record baru, lewat satu koneksi WebSocket yang tetap terbuka (ping 15 detik; sambung ulang otomatis tiap 5 detik).
 - **Setiap pergantian menit (UTC):** hitung agregat menit dan buat record `minute`:
   - rata-rata suhu DHT, kelembapan, suhu BMP, tekanan, lux, dan AO hujan (hanya dari sampel valid; jika tidak ada yang valid → `null`),
   - `rain_wet_seconds` = jumlah sampel basah × 10,
@@ -143,32 +143,39 @@ File `include/config.h` (di-gitignore) dengan contoh `include/config.example.h`:
 
 ### 4.4 Store-and-forward (LittleFS)
 - Record `minute` dan `rain_event` disebut **record persisten**.
-- Record baru masuk antrean RAM (maksimal 30) dan dikirim pada request menit berikutnya. HTTP 200 = semua record tersimpan (server idempoten), jadi tidak perlu `seq`/ACK.
-- Request gagal (tidak tersambung, timeout 10 detik, non-200), atau tidak tersambung: record ditulis ke **`/pending.ndjson`** (satu JSON per baris).
-- Saat tersambung: isi file dikirim dalam batch maksimal 50 record dengan `backfill: true`, jeda 3 detik antar batch; baris yang terkirim dihapus dari file.
-- 400/413 (payload ditolak permanen): batch dibuang dan dicatat di Serial agar antrean tidak macet.
+- Record baru masuk antrean RAM (maksimal 30) dan dikirim pada heartbeat berikutnya (≤ 10 detik) sebagai satu batch ber-`id`. Batch dianggap tersimpan hanya setelah server membalas `ack` dengan `id` yang sama (server idempoten, jadi kirim ulang aman).
+- Belum terautentikasi/tersambung, koneksi putus, atau `ack` tidak datang dalam 10 detik: record ditulis ke **`/pending.ndjson`** (satu JSON per baris) dan koneksi disambung ulang.
+- Saat tersambung: isi file dikirim dalam batch maksimal 50 record dengan `backfill: true`, satu batch menunggu `ack` sebelum batch berikutnya (jeda minimal 1 detik); baris yang di-ack dihapus dari file.
+- `nack` dengan `permanent: true` (payload ditolak): batch dibuang dan dicatat di Serial agar antrean tidak macet. `nack` tidak permanen (server gagal menyimpan): dicoba lagi setelah 10 detik.
 - Batas ukuran file **1 MB**. Jika penuh, record baru dibuang dan `buffer_full: true` dilaporkan.
 - Data di file tetap ada meskipun listrik mati.
 
 ### 4.5 Keandalan
 - Reconnect WiFi otomatis (backoff 5 detik → maks 60 detik).
 - Aktifkan Task Watchdog Timer (30 detik).
-- HTTPS dengan verifikasi sertifikat (`ROOT_CA`), bukan `setInsecure`.
+- WSS dengan verifikasi sertifikat (`ROOT_CA`), bukan `setInsecure`. `WS_TLS 0` hanya untuk uji lokal.
 - Log ke Serial (115200) untuk debugging.
 
 ---
 
-## 5. Protokol HTTP (menggantikan WebSocket, 2026-11-09)
+## 5. Protokol WebSocket (menggantikan HTTPS POST + SSE, 2026-11-09)
 
-Semua pesan berupa JSON. Waktu `ts` dalam **Unix epoch detik UTC**.
+Semua pesan berupa teks JSON. Waktu `ts` dalam **Unix epoch detik UTC**. Server: `web/apps/web/src/lib/wsServer.ts` (dipasang oleh `web/apps/web/server.ts`).
 
-### 5.1 Perangkat → server
-`POST /api/device/ingest`, header `Authorization: Bearer <DEVICE_TOKEN>`. Token disimpan di DB sebagai hash scrypt (`node:crypto`). Maksimal 60 record per request.
+### 5.1 Perangkat → server (`/ws/device`)
+ESP32 membuka `wss://domain/ws/device`. Pesan pertama wajib `hello`; token disimpan di DB sebagai hash scrypt (`node:crypto`). Tanpa `hello` valid dalam 5 detik, atau token salah: server membalas `error` lalu menutup dengan kode **4401**. Koneksi baru dari perangkat yang sama menutup koneksi lama (kode 4000). Batas 64 KB per pesan, maksimal 60 record per pesan.
 
 ```json
-{"device_id":"stasiun-01","fw":"1.0.0",
+{"type":"hello","device_id":"stasiun-01","token":"<DEVICE_TOKEN>"}
+```
+
+Sesudah `hello_ack`, perangkat mengirim pesan data (payload ingest). `id` (bilangan bulat) hanya ada jika `records` tidak kosong; tanpa `id` pesan adalah heartbeat murni dan tidak dibalas.
+
+```json
+{"id":42,"device_id":"stasiun-01","fw":"1.0.0",
  "status":{"ts":1762500060,"rssi":-67,"uptime_s":3600,"heap_free":182000,"backlog":0,"buffer_full":false,"time_valid":true,
            "sensors":{"dht22":false,"bmp280":true,"bh1750":false,"rain":true}},
+ "live":{"ts":1762500060,"temp_dht":null,"hum_dht":null,"temp_bmp":27.9,"pressure_hpa":985.32,"lux":null,"rain_analog":3900,"rain_wet":false},
  "records":[
    {"type":"minute","ts":1762500000,"temp_dht":null,"hum_dht":null,"temp_bmp":27.9,"pressure_hpa":985.32,
     "lux":null,"rain_analog_avg":3900,"rain_wet_seconds":0,"samples":6},
@@ -176,11 +183,15 @@ Semua pesan berupa JSON. Waktu `ts` dalam **Unix epoch detik UTC**.
 ```
 
 ### 5.2 Server → perangkat
-`200 {"ok":true,"stored":2,"duplicates":0,"server_time":1762500061}` · `400` payload tidak valid · `401` token salah · `413` terlalu besar · `429` rate limit.
-**Deduplikasi di server** memakai kunci unik `(device_id, ts)` untuk minute dan `(device_id, ts, state)` untuk rain_event (`ON CONFLICT DO NOTHING`, tetap 200).
+- `{"type":"hello_ack","server_time":1762500061}`
+- `{"type":"ack","id":42,"stored":2,"duplicates":0}`: semua record di pesan `id` tersimpan.
+- `{"type":"nack","id":42,"error":"...","permanent":true}`: payload tidak valid (`permanent: true`, dibuang) atau server gagal menyimpan (`permanent: false`, kirim ulang nanti).
+- `{"type":"error","error":"..."}`: autentikasi gagal. Penutupan karena terlalu sering: kode 1008 (maks 120 pesan/menit per perangkat; 60 koneksi/menit per IP sebelum autentikasi).
 
-### 5.3 Dashboard
-Polling `GET /api/live` (hanya baca, tanpa autentikasi). Tidak ada `/ws/live`.
+**Deduplikasi di server** memakai kunci unik `(device_id, ts)` untuk minute dan `(device_id, ts, state)` untuk rain_event (`ON CONFLICT DO NOTHING`, tetap di-`ack`). Server mengirim ping WebSocket tiap 15 detik dan memutus koneksi yang tidak membalas.
+
+### 5.3 Dashboard (`/ws/live`)
+Browser membuka `ws(s)://host/ws/live` (hanya baca; menyambung ulang sendiri dengan jeda 1 → 15 detik). Event JSON: `live` (tiap heartbeat; yang terakhir dikirim saat tersambung), `minute` (record menit baru → komponen server di-refresh otomatis), `offline` (tidak ada heartbeat selama `DEVICE_OFFLINE_AFTER_SEC`, default 30). `GET /api/live` untuk snapshot saat tersambung dan cadangan tiap 60 detik. Hub event ada di memori proses web (satu instance). Caddy `reverse_proxy` meneruskan upgrade WebSocket tanpa konfigurasi tambahan.
 
 ---
 
@@ -353,7 +364,7 @@ CALIB_START=                    # 1-2 hari pertama data sungguhan
 CALIB_END=                      # harus <= EVAL_START
 EVAL_START=                     # contoh 2026-11-20T00:00:00+07:00
 EVAL_END=
-DEVICE_OFFLINE_AFTER_SEC=180
+DEVICE_OFFLINE_AFTER_SEC=30            # heartbeat ESP tiap 10 detik
 DOMAIN=                         # domain/subdomain VPS, ditanyakan ke pengguna
 ```
 
@@ -361,7 +372,7 @@ DOMAIN=                         # domain/subdomain VPS, ditanyakan ke pengguna
 
 ## 11. Dashboard Next.js (`apps/web`)
 
-Bahasa Indonesia, tampilan bersih, responsif (bisa dibuka di HP), mode terang/gelap. Semua waktu ditampilkan dalam WIB. Data terbaru dari polling `/api/live`, data historis dari database.
+Bahasa Indonesia, tampilan bersih, responsif (bisa dibuka di HP), mode terang/gelap. Semua waktu ditampilkan dalam WIB. Data terbaru lewat WebSocket `/ws/live` (cadangan: polling `/api/live`), data historis dari database.
 
 ### 11.1 Beranda `/`
 - Kartu: suhu (DHT22), kelembapan, tekanan, intensitas cahaya, titik embun, status hujan (Hujan/Tidak hujan), waktu data terakhir.
@@ -408,7 +419,7 @@ Route handler `/api/export/{readings|rain-events|predictions|bmkg|evaluation}?fr
 ## 12. Alat Bantu
 
 ### 12.1 Simulator perangkat (`tools/simulator`)
-Script Node.js yang berperilaku seperti ESP32: POST ke `/api/device/ingest` tiap menit dengan data sintetis yang realistis (siklus suhu harian, tekanan dengan siklus harian ±1,5 hPa, kejadian hujan acak), termasuk mode **simulasi offline** (putus N menit lalu kirim record tertunda dengan `backfill: true`). Ada opsi percepatan waktu untuk pengujian. **Seluruh server dan dashboard harus bisa diuji penuh memakai simulator sebelum hardware tersedia.**
+Script Node.js yang berperilaku seperti ESP32: menyambung ke `/ws/device` (hello, heartbeat 10 detik, record per menit dengan ack) dengan data sintetis yang realistis (siklus suhu harian, tekanan dengan siklus harian ±1,5 hPa, kejadian hujan acak), termasuk mode **simulasi offline** (putus N menit lalu kirim record tertunda dengan `backfill: true`). Ada opsi percepatan waktu untuk pengujian. **Seluruh server dan dashboard harus bisa diuji penuh memakai simulator sebelum hardware tersedia.**
 
 ### 12.2 Fuzzy explain (`tools/fuzzy-explain`)
 CLI: `npm run fuzzy:explain -- --dp -1.2 --rh 88 --t 26.5` mencetak perhitungan langkah demi langkah dalam format **Markdown** (tabel keanggotaan, aturan aktif dengan nilai min, agregasi, centroid). Hasilnya akan dipakai untuk subbab "Contoh Perhitungan Fuzzy" di makalah.
@@ -423,7 +434,7 @@ CLI: `npm run fuzzy:explain -- --dp -1.2 --rh 88 --t 26.5` mencetak perhitungan 
   - minimal 5 kasus fuzzy dengan hasil yang dihitung manual,
   - penentuan slot, label hujan aktual (termasuk kasus data tidak lengkap), dan metrik (termasuk pembagian nol),
   - parser BMKG terhadap fixture respons asli.
-- **Uji integrasi:** simulator → `/api/device/ingest` → database → evaluasi, termasuk skenario offline dan duplikasi data.
+- **Uji integrasi:** simulator → `/ws/device` → database → evaluasi, termasuk skenario offline dan duplikasi data.
 - Firmware: sediakan mode `TEST_MODE` yang mencetak semua pembacaan sensor ke Serial tanpa WiFi, untuk uji wiring dan kalibrasi FC-37.
 
 ---
@@ -432,7 +443,7 @@ CLI: `npm run fuzzy:explain -- --dp -1.2 --rh 88 --t 26.5` mencetak perhitungan 
 
 - `docker-compose.yml` berisi: `web`, `caddy`. **Tidak ada service `postgres`**: `DATABASE_URL` menunjuk ke Postgres terkelola (Supabase; dua proyek `dev` dan `prod`) atau Postgres sendiri. Seed hanya boleh jalan jika `app_config.environment = 'dev'`.
 - **Caddy** sebagai reverse proxy dengan HTTPS otomatis:
-  - semua → web.
+  - semua → web (termasuk upgrade WebSocket `/ws/device` dan `/ws/live`).
 - Migrasi database dijalankan otomatis saat web start.
 - Script `npm run device:create -- --id stasiun-01` untuk membuat perangkat dan mencetak token (hanya sekali).
 - Backup: Supabase punya cadangan sendiri, tetapi tetap lakukan ekspor mandiri data penelitian (CSV dari dashboard dan/atau `pg_dump` berkala) karena itu hasil utama makalah.
@@ -444,7 +455,7 @@ CLI: `npm run fuzzy:explain -- --dp -1.2 --rh 88 --t 26.5` mencetak perhitungan 
 
 1. **Scaffold monorepo + skema DB + migrasi.** Selesai jika `docker compose up` menjalankan postgres dan migrasi berhasil.
 2. **`packages/core` (fuzzy, meteo, evaluasi) + unit test.** Selesai jika semua test lulus dan `fuzzy:explain` menghasilkan Markdown yang benar.
-3. **Endpoint ingest HTTP + simulator.** Selesai jika data simulator tersimpan, duplikasi diabaikan, backfill bekerja, dan prediksi fuzzy tersimpan tiap menit.
+3. **Endpoint ingest WebSocket + simulator.** Selesai jika data simulator tersimpan, duplikasi diabaikan, backfill bekerja, dan prediksi fuzzy tersimpan tiap menit.
 4. **Integrasi BMKG.** Selesai jika fixture respons asli tersimpan, parser lulus test, dan cron menyimpan prakiraan. (Wilayah disetel pengguna di `/pengaturan`.)
 5. **Job evaluasi.** Selesai jika `evaluation_slots` terisi benar untuk data simulator.
 6. **Dashboard** (semua halaman Bagian 11 + ekspor CSV).

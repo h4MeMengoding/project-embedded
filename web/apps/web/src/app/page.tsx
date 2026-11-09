@@ -40,8 +40,7 @@ export default async function Home() {
         <PageShell>
           <NavBar active="beranda" />
           <HomeLive
-            initial={{ reading, prediction, device: { online: device.online, lastSeenAt: device.lastSeenAt } }}
-            wsUrl={env.publicWsUrl}
+            initial={{ reading, prediction, device: { online: device.online, lastSeenAt: device.lastSeenAt, sensors: device.sensors } }}
             bmkgNow={slots[0] ? { weatherCode: slots[0].weatherCode, weatherDesc: slots[0].weatherDesc, slotLabel: slotLabel(slots[0].utcDatetime, env.slotMode) } : null}
             threshold={env.predictThreshold}
             offlineAfterSec={env.offlineAfterSec}

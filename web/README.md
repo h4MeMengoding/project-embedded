@@ -42,7 +42,8 @@ npm run seed -w @ws/seed -- --scenario offline|insufficient|disagree --reset
 ## Menjalankan
 
 ```bash
-npm run dev            # http://localhost:3000
+npm run dev            # http://localhost:3000 (server kustom: Next + WebSocket, jangan pakai `next dev`)
+npm start              # produksi (setelah npm run build)
 npm test               # semua workspace
 npm run typecheck
 npm run build
@@ -53,21 +54,25 @@ Halaman: `/` Beranda, `/riwayat`, `/evaluasi`, `/fuzzy`, `/perangkat`, `/pengatu
 ## Catatan
 
 - Wilayah BMKG disetel di `/pengaturan` (login `ADMIN_PASSWORD`), dicek ke BMKG sebelum disimpan, terkunci setelah `EVAL_START`. `BMKG_ADM4` di env hanya cadangan; kosong berarti `SEED`.
+- Realtime: ESP membuka WebSocket `/ws/device` ke server dan mengirim heartbeat tiap 10 detik; browser menerima lewat WebSocket `/ws/live` (data baru tanpa refresh, offline terdeteksi setelah `DEVICE_OFFLINE_AFTER_SEC`, default 30 dtk).
 - Cron di proses web (`src/instrumentation.ts`): ambil BMKG menit ke-5 tiap jam (dan saat start), hitung ulang evaluasi menit ke-10. `DISABLE_JOBS=1` mematikannya.
 
 ## Perangkat ESP32
 
 ```bash
 npm run db:migrate -w @ws/db                  # sekali, menambah kolom devices.last_sensors
-npm run device:create -- --id stasiun-01      # cetak token SEKALI; salin ke esp/include/config.h
+npm run device:create                         # pakai DEVICE_ID dari .env.local; cetak baris siap-salin untuk config.h
 ```
 
-ESP32 mengirim `POST /api/device/ingest` tiap menit (header `Authorization: Bearer <token>`). Lihat `../esp/README.md`.
-Uji tanpa hardware (ganti `<token>` dan `ts` dengan awal menit UTC terbaru):
+ESP32 menyambung ke `wss://domain/ws/device`, mengirim `hello` (device_id + token), lalu heartbeat tiap 10 detik dan record per menit yang dibalas `ack`. Protokol lengkap: `../CLAUDE.md` Bagian 5. Lihat `../esp/README.md`.
+Uji tanpa hardware (Node 24 punya `WebSocket` bawaan; ganti `<token>`, dan `ts` = awal menit UTC terbaru):
 
 ```bash
-curl -X POST localhost:3000/api/device/ingest -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' \
-  -d '{"device_id":"stasiun-01","fw":"dev","status":{"ts":null,"rssi":-60,"uptime_s":1,"heap_free":1,"backlog":0,"buffer_full":false,"time_valid":true,"sensors":{"dht22":false,"bmp280":true,"bh1750":false,"rain":true}},"records":[{"type":"minute","ts":1794234900,"temp_dht":null,"hum_dht":null,"temp_bmp":27.9,"pressure_hpa":985.3,"lux":null,"rain_analog_avg":3900,"rain_wet_seconds":0,"samples":6}]}'
+node -e '
+const ws = new WebSocket("ws://localhost:3000/ws/device");
+ws.onopen = () => ws.send(JSON.stringify({type:"hello",device_id:"stasiun-01",token:"<token>"}));
+ws.onmessage = (m) => { console.log(m.data); if (JSON.parse(m.data).type === "hello_ack") ws.send(JSON.stringify({id:1,device_id:"stasiun-01",fw:"dev",live:null,status:{ts:null,rssi:-60,uptime_s:1,heap_free:1,backlog:0,buffer_full:false,time_valid:true,sensors:{dht22:false,bmp280:true,bh1750:false,rain:true}},records:[{type:"minute",ts:1794234900,temp_dht:null,hum_dht:null,temp_bmp:27.9,pressure_hpa:985.3,lux:null,rain_analog_avg:3900,rain_wet_seconds:0,samples:6}]})); else process.exit(0); };
+'
 ```
 - Semua tampilan memakai WIB; database UTC.
 - Mengubah parameter fuzzy wajib menaikkan `config_version` dan hanya sebelum periode evaluasi.

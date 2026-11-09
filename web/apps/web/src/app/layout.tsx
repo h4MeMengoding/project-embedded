@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import { AosInit } from '@/components/AosInit';
+import { LiveRefresher } from '@/components/LiveRefresher';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -15,7 +16,7 @@ export const metadata: Metadata = { title: 'Stasiun Cuaca' };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id">
-      <body className={`${jakarta.variable} font-sans`}>{children}<AosInit /><Toaster position="bottom-right" richColors closeButton /></body>
+      <body className={`${jakarta.variable} font-sans`}>{children}<AosInit /><LiveRefresher /><Toaster position="bottom-right" richColors closeButton /></body>
     </html>
   );
 }
