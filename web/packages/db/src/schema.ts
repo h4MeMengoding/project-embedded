@@ -18,6 +18,8 @@ export const devices = pgTable('devices', {
   lastBacklog: integer('last_backlog'),
   // Tambahan di luar CLAUDE.md Bagian 6: dibutuhkan halaman Perangkat (buffer_full).
   lastBufferFull: boolean('last_buffer_full'),
+  // Tambahan: sensor mana yang terdeteksi firmware ({dht22,bmp280,bh1750,rain}), untuk "belum terhubung".
+  lastSensors: jsonb('last_sensors'),
 });
 
 export const readingsMinute = pgTable(

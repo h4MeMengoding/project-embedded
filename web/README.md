@@ -48,10 +48,26 @@ npm run typecheck
 npm run build
 ```
 
-Halaman: `/` Beranda, `/riwayat`, `/evaluasi`, `/fuzzy`, `/perangkat`; ekspor CSV `/api/export/{readings|rain-events|predictions|bmkg|evaluation}?from=&to=` (ISO, UTC dan WIB).
+Halaman: `/` Beranda, `/riwayat`, `/evaluasi`, `/fuzzy`, `/perangkat`, `/pengaturan` (admin); ekspor CSV `/api/export/{readings|rain-events|predictions|bmkg|evaluation}?from=&to=` (ISO, UTC dan WIB).
 
 ## Catatan
 
-- `BMKG_ADM4` kosong berarti `SEED`. Jangan menebak kode wilayah; isi setelah diverifikasi.
+- Wilayah BMKG disetel di `/pengaturan` (login `ADMIN_PASSWORD`), dicek ke BMKG sebelum disimpan, terkunci setelah `EVAL_START`. `BMKG_ADM4` di env hanya cadangan; kosong berarti `SEED`.
+- Cron di proses web (`src/instrumentation.ts`): ambil BMKG menit ke-5 tiap jam (dan saat start), hitung ulang evaluasi menit ke-10. `DISABLE_JOBS=1` mematikannya.
+
+## Perangkat ESP32
+
+```bash
+npm run db:migrate -w @ws/db                  # sekali, menambah kolom devices.last_sensors
+npm run device:create -- --id stasiun-01      # cetak token SEKALI; salin ke esp/include/config.h
+```
+
+ESP32 mengirim `POST /api/device/ingest` tiap menit (header `Authorization: Bearer <token>`). Lihat `../esp/README.md`.
+Uji tanpa hardware (ganti `<token>` dan `ts` dengan awal menit UTC terbaru):
+
+```bash
+curl -X POST localhost:3000/api/device/ingest -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' \
+  -d '{"device_id":"stasiun-01","fw":"dev","status":{"ts":null,"rssi":-60,"uptime_s":1,"heap_free":1,"backlog":0,"buffer_full":false,"time_valid":true,"sensors":{"dht22":false,"bmp280":true,"bh1750":false,"rain":true}},"records":[{"type":"minute","ts":1794234900,"temp_dht":null,"hum_dht":null,"temp_bmp":27.9,"pressure_hpa":985.3,"lux":null,"rain_analog_avg":3900,"rain_wet_seconds":0,"samples":6}]}'
+```
 - Semua tampilan memakai WIB; database UTC.
 - Mengubah parameter fuzzy wajib menaikkan `config_version` dan hanya sebelum periode evaluasi.

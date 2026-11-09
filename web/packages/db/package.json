@@ -9,7 +9,8 @@
     "test": "vitest run --passWithNoTests",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/migrate.ts",
-    "db:set-env": "tsx src/setEnvironment.ts"
+    "db:set-env": "tsx src/setEnvironment.ts",
+    "device:create": "tsx src/createDevice.ts"
   },
   "dependencies": {
     "@ws/core": "*",

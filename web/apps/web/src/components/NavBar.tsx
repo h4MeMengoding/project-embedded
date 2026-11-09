@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { LuActivity, LuChartColumn, LuCpu, LuHouse, LuListChecks, LuMenu } from 'react-icons/lu';
+import { LuActivity, LuChartColumn, LuCpu, LuHouse, LuListChecks, LuMenu, LuSettings } from 'react-icons/lu';
 
 const ITEMS = [
   { key: 'beranda', href: '/', label: 'Beranda', Icon: LuHouse },
@@ -7,6 +7,7 @@ const ITEMS = [
   { key: 'evaluasi', href: '/evaluasi', label: 'Evaluasi', Icon: LuListChecks },
   { key: 'fuzzy', href: '/fuzzy', label: 'Fuzzy', Icon: LuActivity },
   { key: 'perangkat', href: '/perangkat', label: 'Perangkat', Icon: LuCpu },
+  { key: 'pengaturan', href: '/pengaturan', label: 'Pengaturan', Icon: LuSettings },
 ] as const;
 
 export type NavKey = (typeof ITEMS)[number]['key'];

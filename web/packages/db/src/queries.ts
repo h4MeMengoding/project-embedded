@@ -1,3 +1,4 @@
+import type { SensorFlags } from '@ws/core';
 import { and, asc, desc, eq, gte, lt, lte, sql } from 'drizzle-orm';
 import { wibDayKey } from '@ws/core';
 import type { Db } from './client';
@@ -18,6 +19,8 @@ export type DeviceStatus = {
   backlog: number | null;
   fwVersion: string | null;
   bufferFull: boolean | null;
+  /** Sensor yang terdeteksi firmware; null jika perangkat belum pernah melapor. */
+  sensors: SensorFlags | null;
 };
 
 export async function getLatestReading(db: Db, deviceId: string): Promise<ReadingRow | null> {
@@ -42,6 +45,7 @@ export async function getDeviceStatus(db: Db, deviceId: string, offlineAfterSec:
     backlog: d?.lastBacklog ?? null,
     fwVersion: d?.fwVersion ?? null,
     bufferFull: d?.lastBufferFull ?? null,
+    sensors: (d?.lastSensors as SensorFlags | null | undefined) ?? null,
   };
 }
 

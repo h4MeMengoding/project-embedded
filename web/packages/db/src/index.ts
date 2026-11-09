@@ -2,3 +2,8 @@ export * from './schema';
 export * from './client';
 export * from './queries';
 export * from './evaluationJob';
+export * from './token';
+export * from './settings';
+export * from './predictions';
+export * from './ingest';
+export * from './bmkgStore';

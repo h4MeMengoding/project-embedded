@@ -41,8 +41,12 @@ export function pickFuzzyPrediction<T extends { ts: Date; status: string }>(
   return best;
 }
 
-/** Forecast untuk forecastUtc dengan analysisDate terbaru yang terbit sebelum slotStart. */
-export function pickBmkgForecast<T extends { analysisDate: Date; utcDatetime: Date }>(
+/**
+ * Forecast untuk forecastUtc dengan analysisDate terbaru yang terbit sebelum slotStart.
+ * `analysis_date` adalah waktu run model, bukan waktu terbit; karena itu jika `fetchedAt` ada,
+ * forecast juga harus sudah kita ambil sebelum slotStart (bukti bahwa ia sudah terbit).
+ */
+export function pickBmkgForecast<T extends { analysisDate: Date; utcDatetime: Date; fetchedAt?: Date }>(
   forecasts: T[],
   forecastUtc: Date,
   slotStart: Date,
@@ -51,6 +55,7 @@ export function pickBmkgForecast<T extends { analysisDate: Date; utcDatetime: Da
   for (const f of forecasts) {
     if (f.utcDatetime.getTime() !== forecastUtc.getTime()) continue;
     if (f.analysisDate.getTime() >= slotStart.getTime()) continue;
+    if (f.fetchedAt && f.fetchedAt.getTime() >= slotStart.getTime()) continue;
     if (!best || f.analysisDate.getTime() > best.analysisDate.getTime()) best = f;
   }
   return best;

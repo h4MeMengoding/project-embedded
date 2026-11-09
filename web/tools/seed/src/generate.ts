@@ -17,6 +17,7 @@ export type RainEventSeed = { ts: Date; state: 'start' | 'stop'; isBackfill: boo
 export type BmkgSeed = {
   adm4: string;
   analysisDate: Date;
+  fetchedAt: Date;
   utcDatetime: Date;
   localDatetime: string;
   t: number;
@@ -172,6 +173,7 @@ export function generateBmkg(opts: { from: Date; days: number; scenario: Scenari
       out.push({
         adm4: 'SEED',
         analysisDate: new Date(a),
+        fetchedAt: new Date(Math.min(a + 3 * HOUR, nowMs)), // terbit ~3 jam setelah run model
         utcDatetime: new Date(t),
         localDatetime: wib,
         t: r1(27.5 + 4 * Math.sin((2 * Math.PI * (wibH - 9)) / 24)),

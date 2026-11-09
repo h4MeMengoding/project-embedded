@@ -1,6 +1,5 @@
-import { recomputeEvaluation } from '@ws/db';
 import { getDb } from '@/lib/db';
-import { getEnv } from '@/lib/env';
+import { runEvaluationJob } from '@/lib/jobs';
 import { createRateLimiter } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
@@ -12,15 +11,6 @@ export async function POST(req: Request) {
   if (!rl.allowed) {
     return Response.json({ error: 'Terlalu sering', retryAfterSec: rl.retryAfterSec }, { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }
-  const env = getEnv();
-  const res = await recomputeEvaluation(getDb(), {
-    deviceId: env.deviceId,
-    adm4: env.adm4,
-    from: env.evalStart ?? new Date(0),
-    to: env.evalEnd ?? new Date(),
-    slotMode: env.slotMode,
-    minWetMinutes: env.rainMinWetMinutes,
-    predictThreshold: env.predictThreshold,
-  });
+  const res = await runEvaluationJob(getDb());
   return Response.json(res);
 }

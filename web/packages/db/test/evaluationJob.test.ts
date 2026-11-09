@@ -29,7 +29,7 @@ describe.skipIf(!HAS_DB)('evaluation job', () => {
     await db.insert(readingsMinute).values([...mins(T1, 180, 12), ...mins(T2, 100, 30), ...mins(T3, 180, 0)]);
     const pred = (ts: Date, p: number) => ({ deviceId: dev, ts, configVersion: 'v1', probability: p, predictRain: p > 50, status: 'ok' });
     await db.insert(fuzzyPredictions).values([pred(new Date(T1.getTime() - MIN), 70), pred(new Date(T2.getTime() - MIN), 70), pred(new Date(T3.getTime() - MIN), 20)]);
-    const bm = (utc: Date, analysis: Date, desc: string) => ({ adm4, analysisDate: analysis, utcDatetime: utc, weatherDesc: desc });
+    const bm = (utc: Date, analysis: Date, desc: string) => ({ adm4, analysisDate: analysis, utcDatetime: utc, weatherDesc: desc, fetchedAt: new Date(analysis.getTime() + 1800_000) });
     await db.insert(bmkgForecasts).values([
       bm(T1, new Date(T1.getTime() - H), 'Hujan Ringan'),
       bm(T2, new Date(T2.getTime() - H), 'Hujan Ringan'),

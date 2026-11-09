@@ -1,5 +1,5 @@
 import { formatWib, slotBounds } from '@ws/core';
-import { getBmkgSlots, getDeviceStatus, getLatestPrediction, getLatestReading, getRainIntervals, getSeries } from '@ws/db';
+import { getActiveAdm4, getBmkgSlots, getDeviceStatus, getLatestPrediction, getLatestReading, getRainIntervals, getSeries } from '@ws/db';
 import { selectCurrentSlots } from '@/lib/currentSlots';
 import { getDb } from '@/lib/db';
 import { getEnv } from '@/lib/env';
@@ -21,11 +21,12 @@ export default async function Home() {
   const env = getEnv();
   const db = getDb();
   const now = new Date();
+  const adm4 = await getActiveAdm4(db, env.adm4);
   const [reading, prediction, device, allSlots, series, intervals] = await Promise.all([
     getLatestReading(db, env.deviceId),
     getLatestPrediction(db, env.deviceId),
     getDeviceStatus(db, env.deviceId, env.offlineAfterSec, now),
-    getBmkgSlots(db, env.adm4, new Date(now.getTime() - 4 * 3600_000), 6),
+    getBmkgSlots(db, adm4, new Date(now.getTime() - 4 * 3600_000), 6),
     getSeries(db, env.deviceId, new Date(now.getTime() - 6 * 3600_000), now),
     getRainIntervals(db, env.deviceId, new Date(now.getTime() - 7 * 86400_000), now),
   ]);

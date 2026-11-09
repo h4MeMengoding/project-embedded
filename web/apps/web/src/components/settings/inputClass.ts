@@ -1,0 +1,1 @@
+export const INPUT = 'h-11 w-full rounded-xl border border-[var(--card2)] bg-white px-3 text-[15px] text-[var(--ink)] outline-none focus:border-[#2c8640] focus:ring-2 focus:ring-[#2c8640]/25 disabled:bg-[var(--page)] disabled:text-[var(--muted)]';

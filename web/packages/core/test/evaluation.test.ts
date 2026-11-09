@@ -78,6 +78,12 @@ describe('pickBmkgForecast', () => {
     expect(r).toBeNull();
   });
   it('none -> null', () => expect(pickBmkgForecast([], fu, start)).toBeNull());
+  it('baru diambil sesudah slotStart tidak dipakai (belum terbit saat itu)', () => {
+    const early = { ...f('2026-11-07T00:00:00Z'), fetchedAt: d('2026-11-07T03:05:00Z') };
+    const late = { ...f('2026-11-07T12:00:00Z'), fetchedAt: d('2026-11-07T14:05:00Z') };
+    expect(pickBmkgForecast([early, late], fu, start)).toEqual(early);
+    expect(pickBmkgForecast([late], fu, start)).toBeNull();
+  });
 });
 
 describe('confusion & metrics', () => {

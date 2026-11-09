@@ -40,7 +40,7 @@ export default async function Perangkat() {
             <DeviceStatusCard s={status} deviceId={env.deviceId} />
             <LatencyCard l={latency} backfill={backfill} />
           </div>
-          <SensorTable latest={latest} history={series.readings} />
+          <SensorTable latest={latest} history={series.readings} sensors={status.sensors} />
           <CompletenessChart c={completeness} />
           <GapList gaps={gaps} />
         </div>

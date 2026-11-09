@@ -11,7 +11,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build -w @ws/web",
     "dev": "npm run dev -w @ws/web",
-    "calib:report": "npm run report -w @ws/calibration --"
+    "calib:report": "npm run report -w @ws/calibration --",
+    "device:create": "npm run device:create -w @ws/db --"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
