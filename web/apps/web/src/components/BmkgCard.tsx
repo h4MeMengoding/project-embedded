@@ -4,9 +4,9 @@ import { Card } from './Card';
 
 export function BmkgCard({ slots, mode }: { slots: BmkgRow[]; mode: 'start' | 'center' }) {
   return (
-    <Card tone="yellow" title="Prakiraan BMKG" subtitle="Slot saat ini dan dua slot berikutnya">
+    <Card tone="yellow" title="Prakiraan BMKG" subtitle="Slot berjalan dan dua slot berikutnya">
       <div style={{ marginTop: 10 }}>
-        {slots.length === 0 && <div className="slot"><div><b>Prakiraan BMKG belum tersedia</b></div></div>}
+        {slots.length === 0 && <div className="slot"><div><b>Data prakiraan belum tersedia</b></div></div>}
         {slots.map((s) => {
           const start = mode === 'start' ? s.utcDatetime : new Date(s.utcDatetime.getTime() - 1.5 * 3600_000);
           const end = new Date(start.getTime() + 3 * 3600_000);

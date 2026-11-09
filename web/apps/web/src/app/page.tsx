@@ -1,4 +1,4 @@
-import { formatWib } from '@ws/core';
+import { formatWib, slotBounds } from '@ws/core';
 import { getBmkgSlots, getDeviceStatus, getLatestPrediction, getLatestReading, getRainIntervals, getSeries } from '@ws/db';
 import { selectCurrentSlots } from '@/lib/currentSlots';
 import { getDb } from '@/lib/db';
@@ -12,6 +12,11 @@ import { RainActivityCard } from '@/components/RainActivityCard';
 
 export const dynamic = 'force-dynamic';
 
+function slotLabel(utc: Date, mode: 'start' | 'center') {
+  const b = slotBounds(utc, mode);
+  return `${formatWib(b.start, 'time')}–${formatWib(b.end, 'time')}`;
+}
+
 export default async function Home() {
   const env = getEnv();
   const db = getDb();
@@ -22,7 +27,7 @@ export default async function Home() {
     getDeviceStatus(db, env.deviceId, env.offlineAfterSec, now),
     getBmkgSlots(db, env.adm4, new Date(now.getTime() - 4 * 3600_000), 6),
     getSeries(db, env.deviceId, new Date(now.getTime() - 6 * 3600_000), now),
-    getRainIntervals(db, env.deviceId, new Date(now.getTime() - 6 * 86400_000), now),
+    getRainIntervals(db, env.deviceId, new Date(now.getTime() - 7 * 86400_000), now),
   ]);
   const slots = selectCurrentSlots(allSlots, now, env.slotMode, 3);
   const points = series.predictions.filter((p) => p.status === 'ok' && p.probability != null).map((p) => ({ t: p.ts.getTime(), p: p.probability as number }));
@@ -32,11 +37,11 @@ export default async function Home() {
     <>
       <HeroBand>
         <PageShell>
-          <NavBar active="beranda" online={device.online} deviceId={env.deviceId} />
+          <NavBar active="beranda" />
           <HomeLive
             initial={{ reading, prediction, device: { online: device.online, lastSeenAt: device.lastSeenAt } }}
             wsUrl={env.publicWsUrl}
-            bmkgNow={slots[0] ? { weatherCode: slots[0].weatherCode, weatherDesc: slots[0].weatherDesc } : null}
+            bmkgNow={slots[0] ? { weatherCode: slots[0].weatherCode, weatherDesc: slots[0].weatherDesc, slotLabel: slotLabel(slots[0].utcDatetime, env.slotMode) } : null}
             threshold={env.predictThreshold}
             offlineAfterSec={env.offlineAfterSec}
           />
@@ -44,11 +49,11 @@ export default async function Home() {
       </HeroBand>
       <PageShell>
         <div className="cards-row">
-          <ProbabilityHistoryCard points={points} configVersion={prediction?.configVersion ?? null} />
+          <ProbabilityHistoryCard points={points} threshold={env.predictThreshold} configVersion={prediction?.configVersion ?? null} />
           <BmkgCard slots={slots} mode={env.slotMode} />
           <RainActivityCard intervals={intervals} now={now} />
         </div>
-        <div className="stamp">{seen ? `Data terakhir ${formatWib(seen, 'time')} WIB · ` : ''}Semua waktu dalam WIB</div>
+        <div className="stamp">{seen ? `Data terakhir diterima ${formatWib(seen, 'time')} WIB` : ''}</div>
       </PageShell>
     </>
   );

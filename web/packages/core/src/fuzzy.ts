@@ -1,5 +1,5 @@
 import { dewPoint } from './meteo';
-import { FUZZY_CONFIG_V1, type FuzzyConfig, type Level3, type Shape } from './fuzzyConfig';
+import { ACTIVE_FUZZY_CONFIG, type FuzzyConfig, type Level3, type Shape } from './fuzzyConfig';
 
 export const trap = (a: number, b: number, c: number, d: number) => (x: number): number => {
   if (x < a || x > d) return 0;
@@ -37,7 +37,7 @@ function fuzzify(sets: Record<string, Shape>, x: number) {
   return Object.fromEntries(Object.entries(sets).map(([k, s]) => [k, evalShape(s, x)]));
 }
 
-export function runFuzzy(input: FuzzyInput, config: FuzzyConfig = FUZZY_CONFIG_V1): FuzzyResult {
+export function runFuzzy(input: FuzzyInput, config: FuzzyConfig = ACTIVE_FUZZY_CONFIG): FuzzyResult {
   const u = config.universe;
   const dpx = clamp(input.deltaP3h, u.dp);
   const rhx = clamp(input.rh, u.rh);
@@ -80,8 +80,9 @@ export function runFuzzy(input: FuzzyInput, config: FuzzyConfig = FUZZY_CONFIG_V
   };
 }
 
+/** Keputusan biner v2: peluang dibulatkan 1 desimal, lalu hujan bila lebih besar dari ambang. */
 export const isPredictRain = (probability: number, threshold = 50): boolean =>
-  probability >= threshold;
+  Math.round(probability * 10) / 10 > threshold;
 
 export type MinuteRow = {
   ts: Date;
@@ -90,7 +91,7 @@ export type MinuteRow = {
   pressureHpa: number | null;
 };
 export type WindowInputs =
-  | { status: 'ok'; deltaP3h: number; rh: number; temp: number; dewPoint: number; dpd: number }
+  | { status: 'ok'; deltaP3h: number; deltaP3hRaw: number; tideCorrection: number; rh: number; temp: number; dewPoint: number; dpd: number }
   | { status: 'insufficient_data' };
 
 const MIN = 60_000;
@@ -103,7 +104,20 @@ function windowRows(rows: MinuteRow[], end: Date): MinuteRow[] {
   return rows.filter((r) => r.ts.getTime() > e - 10 * MIN && r.ts.getTime() <= e);
 }
 
-export function computeWindowInputs(rows: MinuteRow[], at: Date): WindowInputs {
+const H = 3_600_000;
+const tideAt = (ms: number, t: { amplitudeHpa: number; peakHourWib: number }) =>
+  t.amplitudeHpa * Math.cos((2 * Math.PI * ((((ms + 7 * H) % (24 * H)) / H) - t.peakHourWib)) / 12);
+
+/**
+ * Perubahan tekanan 3 jam yang diharapkan dari variasi harian. Pusat jendela data 10 menit
+ * yang berakhir pada `at` adalah at − 4 menit (rata-rata awal menit + 30 dtk).
+ */
+export function tideDelta3h(at: Date, tide: { amplitudeHpa: number; peakHourWib: number }): number {
+  const c = at.getTime() - 4 * MIN;
+  return tideAt(c, tide) - tideAt(c - 3 * H, tide);
+}
+
+export function computeWindowInputs(rows: MinuteRow[], at: Date, config: FuzzyConfig = ACTIVE_FUZZY_CONFIG): WindowInputs {
   const now = windowRows(rows, at);
   const prev = windowRows(rows, new Date(at.getTime() - 180 * MIN));
   const pNow = now.filter((r) => r.pressureHpa != null).map((r) => r.pressureHpa as number);
@@ -116,5 +130,7 @@ export function computeWindowInputs(rows: MinuteRow[], at: Date): WindowInputs {
   const rh = avg(rhs);
   const temp = avg(temps);
   const td = dewPoint(temp, rh);
-  return { status: 'ok', deltaP3h: avg(pNow) - avg(pPrev), rh, temp, dewPoint: td, dpd: temp - td };
+  const deltaP3hRaw = avg(pNow) - avg(pPrev);
+  const tideCorrection = config.pressureTide ? tideDelta3h(at, config.pressureTide) : 0;
+  return { status: 'ok', deltaP3h: deltaP3hRaw - tideCorrection, deltaP3hRaw, tideCorrection, rh, temp, dewPoint: td, dpd: temp - td };
 }

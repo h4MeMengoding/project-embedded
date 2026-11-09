@@ -1,7 +1,7 @@
 import { and, asc, eq, gte, lt, lte, sql } from 'drizzle-orm';
 import {
-  confusion, isRainForecast, labelActualRain, metricsOf, pickBmkgForecast, pickFuzzyPrediction, slotBounds,
-  type Confusion, type Metrics,
+  confusion, isPredictRain, isRainForecast, labelActualRain, metricsOf, pickBmkgForecast, pickFuzzyPrediction, slotBounds, slotStatus,
+  type Confusion, type Metrics, type SlotStatus,
 } from '@ws/core';
 import type { Db } from './client';
 import { bmkgForecasts, evaluationSlots, fuzzyPredictions, readingsMinute, type EvaluationSlotRow } from './schema';
@@ -42,7 +42,7 @@ export async function recomputeEvaluation(db: Db, o: RecomputeOpts): Promise<{ s
     const label = labelActualRain(minutes, slot, o.minWetMinutes);
     const fp = pickFuzzyPrediction(preds, slot.start);
     const bf = pickBmkgForecast(forecasts, utc, slot.start);
-    const fuzzyPredictRain = fp?.probability != null ? fp.probability >= o.predictThreshold : null;
+    const fuzzyPredictRain = fp?.probability != null ? isPredictRain(fp.probability, o.predictThreshold) : null;
     const bmkgPredictRain = bf ? isRainForecast({ weatherCode: bf.weatherCode, weatherDesc: bf.weatherDesc }) : null;
     const correct = (p: boolean | null) => (label.actualRain == null || p == null ? null : label.actualRain === p);
     return {
@@ -87,15 +87,25 @@ function sqlExcluded(col: string) {
   return sql.raw(`excluded."${col}"`);
 }
 
-export async function getEvaluation(db: Db, deviceId: string, from: Date, to: Date): Promise<{
-  slots: EvaluationSlotRow[];
+export type EvaluationExcluded = { calibration: number; upcoming: number; running: number; incomplete: number; no_fuzzy: number; no_bmkg: number };
+export type EvaluationSlotView = EvaluationSlotRow & { status: SlotStatus };
+
+/** Metrik fuzzy dan BMKG dihitung pada himpunan slot yang sama: data lengkap, selesai, dan punya kedua prediksi. */
+export async function getEvaluation(db: Db, deviceId: string, from: Date, to: Date, now: Date = new Date(), calib?: { start: Date | null; end: Date | null }): Promise<{
+  slots: EvaluationSlotView[];
+  evaluated: number;
+  excluded: EvaluationExcluded;
   fuzzy: { cm: Confusion; metrics: Metrics };
   bmkg: { cm: Confusion; metrics: Metrics };
 }> {
-  const slots = await db.select().from(evaluationSlots)
+  const rows = await db.select().from(evaluationSlots)
     .where(and(eq(evaluationSlots.deviceId, deviceId), gte(evaluationSlots.slotStart, from), lt(evaluationSlots.slotStart, to)))
     .orderBy(asc(evaluationSlots.slotStart));
-  const fcm = confusion(slots.map((s) => ({ actual: s.actualRain, predicted: s.fuzzyPredictRain })));
-  const bcm = confusion(slots.map((s) => ({ actual: s.actualRain, predicted: s.bmkgPredictRain })));
-  return { slots, fuzzy: { cm: fcm, metrics: metricsOf(fcm) }, bmkg: { cm: bcm, metrics: metricsOf(bcm) } };
+  const slots = rows.map((r) => ({ ...r, status: slotStatus(r, now, calib) }));
+  const excluded: EvaluationExcluded = { calibration: 0, upcoming: 0, running: 0, incomplete: 0, no_fuzzy: 0, no_bmkg: 0 };
+  for (const s of slots) if (s.status !== 'ok') excluded[s.status]++;
+  const used = slots.filter((s) => s.status === 'ok');
+  const fcm = confusion(used.map((s) => ({ actual: s.actualRain, predicted: s.fuzzyPredictRain })));
+  const bcm = confusion(used.map((s) => ({ actual: s.actualRain, predicted: s.bmkgPredictRain })));
+  return { slots, evaluated: used.length, excluded, fuzzy: { cm: fcm, metrics: metricsOf(fcm) }, bmkg: { cm: bcm, metrics: metricsOf(bcm) } };
 }

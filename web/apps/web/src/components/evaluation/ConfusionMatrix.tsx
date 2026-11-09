@@ -8,16 +8,16 @@ export function ConfusionMatrix({ title, cm }: { title: string; cm: Confusion })
     </td>
   );
   return (
-    <section className="card light">
-      <h3>{title}</h3>
-      <div className="sub">Baris = aktual, kolom = prediksi</div>
+    <section className="card light" data-aos="fade-up">
+      <h3>Confusion matrix · {title}</h3>
+      <div className="sub">Baris: kondisi aktual; kolom: hasil prediksi</div>
       <table style={{ width: '100%', marginTop: 16, borderSpacing: 8, borderCollapse: 'separate' }}>
         <thead>
-          <tr><th /><th style={{ fontSize: 13 }}>Prediksi hujan</th><th style={{ fontSize: 13 }}>Prediksi tidak</th></tr>
+          <tr><th /><th style={{ fontSize: 13 }}>Prediksi hujan</th><th style={{ fontSize: 13 }}>Prediksi tidak hujan</th></tr>
         </thead>
         <tbody>
           <tr><th style={{ fontSize: 13, textAlign: 'left' }}>Hujan aktual</th>{cell('TP', cm.tp, true)}{cell('FN', cm.fn, false)}</tr>
-          <tr><th style={{ fontSize: 13, textAlign: 'left' }}>Tidak hujan</th>{cell('FP', cm.fp, false)}{cell('TN', cm.tn, true)}</tr>
+          <tr><th style={{ fontSize: 13, textAlign: 'left' }}>Tidak hujan aktual</th>{cell('FP', cm.fp, false)}{cell('TN', cm.tn, true)}</tr>
         </tbody>
       </table>
     </section>

@@ -30,13 +30,13 @@ export default async function Perangkat() {
     <>
       <HeroBand>
         <PageShell>
-          <NavBar active="perangkat" online={status.online} deviceId={env.deviceId} />
+          <NavBar active="perangkat" />
           <div style={{ padding: '40px 0 120px' }}><h1 style={{ fontSize: 40, fontWeight: 800 }}>Perangkat</h1></div>
         </PageShell>
       </HeroBand>
       <PageShell>
         <div className="grid gap-7" style={{ marginTop: -90, position: 'relative', zIndex: 3 }}>
-          <div className="grid gap-7 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-7 lg:grid-cols-2">
             <DeviceStatusCard s={status} deviceId={env.deviceId} />
             <LatencyCard l={latency} backfill={backfill} />
           </div>
@@ -44,7 +44,7 @@ export default async function Perangkat() {
           <CompletenessChart c={completeness} />
           <GapList gaps={gaps} />
         </div>
-        <div className="stamp">Semua waktu dalam WIB · 7 hari terakhir</div>
+        <div className="stamp">Data 7 hari terakhir</div>
       </PageShell>
     </>
   );

@@ -11,6 +11,12 @@ export type FuzzyConfig = {
   out: Record<Level3, Shape>;
   universe: { dp: [number, number]; rh: [number, number]; dpd: [number, number] };
   rules: { dp: string; rh: string; dpd: string; out: Level3 }[];
+  /**
+   * Koreksi variasi harian (pasang surut atmosfer semidiurnal): ΔP3h masukan fuzzy = ΔP3h teramati
+   * dikurangi perubahan 3 jam yang diharapkan dari P(h) = A·cos(2π(h − puncak)/12), h = jam WIB.
+   * Tidak ada pada v1 (tanpa koreksi).
+   */
+  pressureTide?: { amplitudeHpa: number; peakHourWib: number };
 };
 
 const T = 'Tinggi' as const;
@@ -54,3 +60,29 @@ export const FUZZY_CONFIG_V1: FuzzyConfig = {
     RH.flatMap((rh, j) => DPD.map((dpd, k) => ({ dp, rh, dpd, out: OUT[i * 9 + j * 3 + k] }))),
   ),
 };
+
+/**
+ * v2: fungsi keanggotaan dan 27 aturan sama dengan v1; yang berubah adalah masukan ΔP3h (dikoreksi variasi harian)
+ * dan aturan keputusan biner (peluang dibulatkan 1 desimal, hujan bila > ambang). Amplitudo awal 1,0 hPa
+ * (nilai tipikal wilayah tropis) dan hanya boleh disetel dari periode kalibrasi.
+ */
+export const FUZZY_CONFIG_V2: FuzzyConfig = {
+  ...FUZZY_CONFIG_V1,
+  version: 'v2',
+  pressureTide: { amplitudeHpa: 1.0, peakHourWib: 10 },
+};
+
+/**
+ * v3 (KANDIDAT, BELUM AKTIF): prinsip "peluang Tinggi hanya jika tekanan turun".
+ * Beda dari v2 hanya R16 (Stabil, RH Tinggi, DPD Kecil): Tinggi -> Sedang. Tidak boleh diaktifkan
+ * sebelum keputusan model utama dari laporan kalibrasi (CLAUDE.md 9.4a).
+ */
+export const FUZZY_CONFIG_V3: FuzzyConfig = {
+  ...FUZZY_CONFIG_V2,
+  version: 'v3',
+  rules: FUZZY_CONFIG_V2.rules.map((r, i) => (i === 15 ? { ...r, out: S } : r)),
+};
+
+export const FUZZY_CONFIGS: Record<string, FuzzyConfig> = { v1: FUZZY_CONFIG_V1, v2: FUZZY_CONFIG_V2, v3: FUZZY_CONFIG_V3 };
+
+export const ACTIVE_FUZZY_CONFIG: FuzzyConfig = FUZZY_CONFIG_V2;

@@ -1,7 +1,5 @@
-import { FUZZY_CONFIG_V1 as C } from '@ws/core';
-import { getDb } from '@/lib/db';
+import { ACTIVE_FUZZY_CONFIG as C } from '@ws/core';
 import { getEnv } from '@/lib/env';
-import { getDeviceStatus } from '@ws/db';
 import { NavBar } from '@/components/NavBar';
 import { HeroBand, PageShell } from '@/components/PageShell';
 import { MembershipChart } from '@/components/fuzzy/MembershipChart';
@@ -11,33 +9,36 @@ import { Calculator } from '@/components/fuzzy/Calculator';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Fuzzy · Stasiun Cuaca' };
 
-export default async function FuzzyPage() {
-  const env = getEnv();
-  const device = await getDeviceStatus(getDb(), env.deviceId, env.offlineAfterSec, new Date());
+export default function FuzzyPage() {
   return (
     <>
       <HeroBand>
         <PageShell>
-          <NavBar active="fuzzy" online={device.online} deviceId={env.deviceId} />
+          <NavBar active="fuzzy" />
           <div style={{ padding: '40px 0 120px' }}>
             <div className="eyebrow">Metode prediksi</div>
-            <h1 style={{ fontSize: 40, fontWeight: 800, marginTop: 8 }}>Fuzzy Mamdani</h1>
-            <p style={{ marginTop: 8, opacity: 0.85 }}>Konfigurasi aktif: <b>{C.version}</b>. Parameter hanya boleh diubah sebelum periode evaluasi dimulai.</p>
+            <div className="page-head" style={{ marginTop: 8 }}>
+              <div>
+                <h1>Fuzzy Mamdani</h1>
+                <p>Sistem inferensi fuzzy Mamdani untuk memperkirakan peluang hujan 3 jam ke depan dari tiga variabel masukan: perubahan tekanan (ΔP3h), kelembapan relatif (RH), dan selisih suhu terhadap titik embun (DPD). {C.pressureTide && `Nilai ΔP3h telah dikoreksi terhadap variasi harian tekanan (amplitudo ${C.pressureTide.amplitudeHpa.toString().replace('.', ',')} hPa, puncak pukul ${C.pressureTide.peakHourWib}.00 dan ${C.pressureTide.peakHourWib + 12}.00 WIB). Prediksi hujan ditetapkan bila peluang (satu desimal) melebihi ambang.`}</p>
+              </div>
+              <span className="pl white">Konfigurasi aktif: {C.version}</span>
+            </div>
           </div>
         </PageShell>
       </HeroBand>
       <PageShell>
         <div className="grid gap-7" style={{ marginTop: -90, position: 'relative', zIndex: 3 }}>
-          <div className="grid gap-7 lg:grid-cols-2">
-            <MembershipChart title="ΔP3h" unit="hPa" universe={C.universe.dp} sets={C.dp} />
+          <div className="grid grid-cols-1 gap-7 lg:grid-cols-2">
+            <MembershipChart title="ΔP3h terkoreksi" unit="hPa" universe={C.universe.dp} sets={C.dp} />
             <MembershipChart title="Kelembapan (RH)" unit="%" universe={C.universe.rh} sets={C.rh} />
             <MembershipChart title="DPD (suhu − titik embun)" unit="°C" universe={C.universe.dpd} sets={C.dpd} />
             <MembershipChart title="Peluang hujan (output)" unit="%" universe={[0, 100]} sets={C.out} />
           </div>
           <RuleTable />
-          <Calculator />
+          <Calculator threshold={getEnv().predictThreshold} />
         </div>
-        <div className="stamp">Semua waktu dalam WIB</div>
+        <div className="stamp" />
       </PageShell>
     </>
   );

@@ -40,7 +40,7 @@ export function useLive(initial: LiveData, wsUrl: string | null): LiveData {
                 device: { online: true, lastSeenAt: new Date() },
               }));
             } else if (m.type === 'prediction') {
-              setData((p) => ({ ...p, prediction: { ts: new Date((m.ts ?? 0) * 1000), status: m.status ?? 'ok', probability: m.probability ?? null, category: m.category ?? null, predictRain: m.predict_rain ?? null } }));
+              setData((p) => ({ ...p, prediction: { ts: new Date((m.ts ?? 0) * 1000), status: m.status ?? 'ok', probability: m.probability ?? null, category: m.category ?? null, predictRain: m.predict_rain ?? null, deltaP3h: m.delta_p3h ?? null } }));
             }
           } catch {}
         };

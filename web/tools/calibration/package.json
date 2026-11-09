@@ -1,0 +1,20 @@
+{
+  "name": "@ws/calibration",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run --passWithNoTests",
+    "report": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@ws/core": "*",
+    "@ws/db": "*",
+    "drizzle-orm": "^0.36.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15",
+    "dotenv": "^16.4.0"
+  }
+}

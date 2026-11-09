@@ -1,6 +1,7 @@
-export function StationIllustration() {
+export function StationIllustration({ online = true }: { online?: boolean }) {
+  const led = online ? '#7dff8a' : '#8a9a8f';
   return (
-    <div className="stn" aria-hidden="true">
+    <div className={`stn${online ? '' : ' off'}`} aria-hidden="true">
       <svg viewBox="0 0 330 330">
         <defs>
           <linearGradient id="metal" x1="0" x2="1"><stop offset="0" stopColor="#f2f5f2" /><stop offset="1" stopColor="#b9c3bb" /></linearGradient>
@@ -28,7 +29,7 @@ export function StationIllustration() {
         <g transform="translate(185 178)">
           <rect width="38" height="26" rx="5" fill="#1d3b27" />
           <rect x="6" y="6" width="26" height="14" rx="3" fill="#2e5a3d" />
-          <circle cx="19" cy="13" r="3" fill="#7dff8a" className="led" />
+          <circle cx="19" cy="13" r="3" fill={led} className={online ? 'led' : undefined} />
         </g>
         <line x1="172" y1="191" x2="185" y2="191" stroke="#b9c3bb" strokeWidth="4" />
         <g transform="translate(70 196) rotate(-14)">
@@ -48,16 +49,27 @@ export function StationIllustration() {
           <rect x="8" y="9" width="66" height="30" rx="4" fill="#173625" />
           <rect x="14" y="15" width="22" height="9" rx="2" fill="#2f6a46" />
           <text x="41" y="33" fontSize="8" fill="#9fe3b0" fontFamily="monospace">ESP32</text>
-          <circle cx="16" cy="51" r="3" fill="#7dff8a" className="led" />
-          <circle cx="28" cy="51" r="3" fill="#ffc93c" className="led" style={{ animationDelay: '.5s' }} />
+          <circle cx="16" cy="51" r="3" fill={led} className={online ? 'led' : undefined} />
+          <circle cx="28" cy="51" r="3" fill={online ? '#ffc93c' : '#8a9a8f'} className={online ? 'led' : undefined} style={online ? { animationDelay: '.5s' } : undefined} />
         </g>
         <line x1="172" y1="262" x2="205" y2="262" stroke="#b9c3bb" strokeWidth="4" />
-        <g transform="translate(296 224)" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round">
-          <path className="wave" d="M-14 0a20 20 0 0 1 28 0" />
-          <path className="wave" d="M-9 5a13 13 0 0 1 18 0" />
-          <path className="wave" d="M-4 10a6 6 0 0 1 8 0" />
-          <circle cy="15" r="2" fill="#fff" />
-        </g>
+        {online ? (
+          <g transform="translate(296 224)" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round">
+            <path className="wave" d="M-14 0a20 20 0 0 1 28 0" />
+            <path className="wave" d="M-9 5a13 13 0 0 1 18 0" />
+            <path className="wave" d="M-4 10a6 6 0 0 1 8 0" />
+            <circle cy="15" r="2" fill="#fff" />
+          </g>
+        ) : (
+          <g transform="translate(296 224)" fill="none" strokeWidth="2.4" strokeLinecap="round">
+            <g stroke="#fff" opacity=".35">
+              <path d="M-14 0a20 20 0 0 1 28 0" />
+              <path d="M-9 5a13 13 0 0 1 18 0" />
+              <path d="M-4 10a6 6 0 0 1 8 0" />
+            </g>
+            <path d="M-16 -4 16 22M16 -4-16 22" stroke="#ff8a5a" strokeWidth="3.2" />
+          </g>
+        )}
       </svg>
       <div className="tag" style={{ left: '54%', top: '-4%' }}><i />BH1750 <em>Cahaya</em></div>
       <div className="tag" style={{ right: '-6%', top: '33%' }}><i />DHT22 <em>Suhu &amp; RH</em></div>

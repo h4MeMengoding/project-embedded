@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { formatWib } from '@ws/core';
 import type { DeviceStatus } from '@ws/db';
 import { Card } from '../Card';
@@ -18,7 +19,7 @@ export function DeviceStatusCard({ s, deviceId }: { s: DeviceStatus; deviceId: s
   return (
     <Card tone="light" title={`Perangkat ${deviceId}`}>
       <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '8px 24px', marginTop: 16 }}>
-        {rows.map(([k, v]) => (<><dt key={k} style={{ color: 'var(--muted)' }}>{k}</dt><dd key={k + v} style={{ fontWeight: 700 }}>{v}</dd></>))}
+        {rows.map(([k, v]) => (<Fragment key={k}><dt style={{ color: 'var(--muted)' }}>{k}</dt><dd style={{ fontWeight: 700 }}>{v}</dd></Fragment>))}
       </dl>
     </Card>
   );

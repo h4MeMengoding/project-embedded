@@ -6,6 +6,8 @@ export type AppEnv = {
   rainMinWetMinutes: number;
   evalStart: Date | null;
   evalEnd: Date | null;
+  calibStart: Date | null;
+  calibEnd: Date | null;
   offlineAfterSec: number;
   publicWsUrl: string | null;
 };
@@ -31,6 +33,9 @@ function date(src: Source, name: string): Date | null {
 export function getEnv(src: Source = process.env): AppEnv {
   const mode = src.BMKG_SLOT_MODE?.trim() || 'start';
   if (mode !== 'start' && mode !== 'center') throw new Error(`BMKG_SLOT_MODE harus start atau center, nilai: "${mode}"`);
+  const calibEnd = date(src, 'CALIB_END');
+  const evalStart = date(src, 'EVAL_START');
+  if (calibEnd && evalStart && calibEnd > evalStart) throw new Error('CALIB_END harus lebih awal atau sama dengan EVAL_START');
   return {
     deviceId: src.DEVICE_ID?.trim() || 'stasiun-01',
     adm4: src.BMKG_ADM4?.trim() || 'SEED',
@@ -39,6 +44,8 @@ export function getEnv(src: Source = process.env): AppEnv {
     rainMinWetMinutes: num(src, 'RAIN_MIN_WET_MINUTES', 10),
     evalStart: date(src, 'EVAL_START'),
     evalEnd: date(src, 'EVAL_END'),
+    calibStart: date(src, 'CALIB_START'),
+    calibEnd: date(src, 'CALIB_END'),
     offlineAfterSec: num(src, 'DEVICE_OFFLINE_AFTER_SEC', 180),
     publicWsUrl: src.PUBLIC_WS_URL?.trim() || null,
   };

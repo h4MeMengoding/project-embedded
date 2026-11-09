@@ -82,9 +82,25 @@ export function metricsOf(cm: Confusion): Metrics {
   const n = cm.tp + cm.fp + cm.tn + cm.fn;
   const precision = ratio(cm.tp, cm.tp + cm.fp);
   const recall = ratio(cm.tp, cm.tp + cm.fn);
-  const f1 =
-    precision == null || recall == null || precision + recall === 0
-      ? null
-      : (2 * precision * recall) / (precision + recall);
+  // F1 = 2TP / (2TP + FP + FN); tidak terdefinisi hanya bila TP, FP, dan FN semuanya 0
+  const f1 = ratio(2 * cm.tp, 2 * cm.tp + cm.fp + cm.fn);
   return { n, accuracy: ratio(cm.tp + cm.tn, n), precision, recall, f1 };
+}
+
+export type SlotStatus = 'calibration' | 'upcoming' | 'running' | 'incomplete' | 'no_fuzzy' | 'no_bmkg' | 'ok';
+
+/** Status slot untuk tampilan dan penyaringan metrik; urutan prioritas sama dengan urutan alasan pengecualian. */
+export function slotStatus(
+  s: { slotStart: Date; slotEnd: Date; actualRain: boolean | null; fuzzyPredictRain: boolean | null; bmkgPredictRain: boolean | null },
+  now: Date,
+  calib?: { start: Date | null; end: Date | null },
+): SlotStatus {
+  // slot yang beririsan dengan periode kalibrasi tidak boleh masuk metrik makalah
+  if (calib?.end && s.slotStart.getTime() < calib.end.getTime() && s.slotEnd.getTime() > (calib.start?.getTime() ?? -Infinity)) return 'calibration';
+  if (s.slotStart.getTime() > now.getTime()) return 'upcoming';
+  if (s.slotEnd.getTime() > now.getTime()) return 'running';
+  if (s.actualRain == null) return 'incomplete';
+  if (s.fuzzyPredictRain == null) return 'no_fuzzy';
+  if (s.bmkgPredictRain == null) return 'no_bmkg';
+  return 'ok';
 }

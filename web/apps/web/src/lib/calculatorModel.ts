@@ -1,4 +1,4 @@
-import { runFuzzy, dewPointDepression, FUZZY_CONFIG_V1, type FuzzyResult } from '@ws/core';
+import { runFuzzy, dewPointDepression, ACTIVE_FUZZY_CONFIG, type FuzzyResult } from '@ws/core';
 
 export type CalculatorModel = {
   result: FuzzyResult;
@@ -15,7 +15,7 @@ export function buildCalculatorModel(input: { deltaP3h: number; rh: number; temp
   else if (input.dpd != null && Number.isFinite(input.dpd) && input.dpd >= 0) dpd = input.dpd;
   else throw new Error('Isi suhu atau DPD (DPD tidak boleh negatif)');
   const result = runFuzzy({ deltaP3h, rh, dpd });
-  const activeRules = FUZZY_CONFIG_V1.rules.flatMap((r, i) =>
+  const activeRules = ACTIVE_FUZZY_CONFIG.rules.flatMap((r, i) =>
     result.ruleStrengths[i] > 0
       ? [{ no: `R${i + 1}`, text: `JIKA ΔP3h = ${r.dp} DAN RH = ${r.rh} DAN DPD = ${r.dpd} MAKA Peluang = ${r.out}`, strength: result.ruleStrengths[i] }]
       : [],

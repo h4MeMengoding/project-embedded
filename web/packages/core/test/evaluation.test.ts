@@ -97,6 +97,10 @@ describe('confusion & metrics', () => {
     expect(m.recall).toBeCloseTo(0.6);
     expect(m.f1).toBeCloseTo(0.667, 3);
   });
+  it('F1 = 2TP/(2TP+FP+FN)', () => {
+    expect(metricsOf(confusion(rows(0, 3, 5, 2))).f1).toBe(0);
+    expect(metricsOf(confusion(rows(4, 1, 0, 1))).f1).toBeCloseTo(8 / 10);
+  });
   it('all negative -> null ratios, accuracy 1', () => {
     const m = metricsOf(confusion(rows(0, 0, 5, 0)));
     expect(m.precision).toBeNull();
@@ -113,4 +117,19 @@ describe('confusion & metrics', () => {
     expect(cm).toEqual({ tp: 1, fp: 0, tn: 0, fn: 0 });
   });
   it('empty -> n 0, accuracy null', () => expect(metricsOf(confusion([])).accuracy).toBeNull());
+});
+
+import { slotStatus } from '../src/evaluation';
+describe('slotStatus', () => {
+  const now = new Date('2026-11-07T12:00:00Z');
+  const h = (x: number) => new Date(now.getTime() + x * 3600_000);
+  const base = { actualRain: true as boolean | null, fuzzyPredictRain: true as boolean | null, bmkgPredictRain: false as boolean | null };
+  it('urutan prioritas', () => {
+    expect(slotStatus({ slotStart: h(1), slotEnd: h(4), ...base }, now)).toBe('upcoming');
+    expect(slotStatus({ slotStart: h(-1), slotEnd: h(2), ...base, actualRain: null }, now)).toBe('running');
+    expect(slotStatus({ slotStart: h(-4), slotEnd: h(-1), ...base, actualRain: null }, now)).toBe('incomplete');
+    expect(slotStatus({ slotStart: h(-4), slotEnd: h(-1), ...base, fuzzyPredictRain: null }, now)).toBe('no_fuzzy');
+    expect(slotStatus({ slotStart: h(-4), slotEnd: h(-1), ...base, bmkgPredictRain: null }, now)).toBe('no_bmkg');
+    expect(slotStatus({ slotStart: h(-4), slotEnd: h(-1), ...base }, now)).toBe('ok');
+  });
 });

@@ -3,7 +3,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { eq } from 'drizzle-orm';
-import { computeWindowInputs, runFuzzy, isPredictRain, FUZZY_CONFIG_V1, type MinuteRow } from '@ws/core';
+import { computeWindowInputs, runFuzzy, isPredictRain, ACTIVE_FUZZY_CONFIG, type MinuteRow } from '@ws/core';
 import {
   createDb, recomputeEvaluation, devices, readingsMinute, rainEvents, fuzzyPredictions, bmkgForecasts, evaluationSlots,
   type Db,
@@ -78,7 +78,7 @@ export async function seed(db: Db, o: { deviceId: string; scenario: Scenario; da
     while (rows[lo].ts.getTime() < at.getTime() - 191 * 60_000) lo++;
     const w = computeWindowInputs(rows.slice(lo, i + 1), at);
     if (w.status !== 'ok') {
-      preds.push({ deviceId: o.deviceId, ts: at, configVersion: FUZZY_CONFIG_V1.version, status: 'insufficient_data' });
+      preds.push({ deviceId: o.deviceId, ts: at, configVersion: ACTIVE_FUZZY_CONFIG.version, status: 'insufficient_data' });
       continue;
     }
     const r = runFuzzy({ deltaP3h: w.deltaP3h, rh: w.rh, dpd: w.dpd });

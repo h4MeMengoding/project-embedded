@@ -72,7 +72,9 @@ describe('runFuzzy manual cases', () => {
 
 describe('isPredictRain', () => {
   it('threshold', () => {
-    expect(isPredictRain(50)).toBe(true);
+    expect(isPredictRain(50)).toBe(false);
+    expect(isPredictRain(50.04)).toBe(false); // dibulatkan 50,0
+    expect(isPredictRain(50.06)).toBe(true); // dibulatkan 50,1
     expect(isPredictRain(49.9)).toBe(false);
     expect(isPredictRain(60, 70)).toBe(false);
   });

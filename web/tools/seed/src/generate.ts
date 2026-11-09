@@ -101,9 +101,11 @@ export function generateSeries(opts: { end: Date; days: number; seed: number; sc
     const raining = !!inStorm;
 
     const temp = 27.5 + 4.5 * Math.sin((2 * Math.PI * (wibH - 9)) / 24) - (raining ? 3 : 0) + (h01(t, seed, 4) - 0.5) * 0.4;
-    const hum = clamp(82 - 3.5 * (temp - 27.5) + (raining ? 12 : 0) + (h01(t, seed, 5) - 0.5) * 3, 40, 100);
+    // RH naik menjelang hujan (pre) bersama turunnya tekanan, lalu turun lagi sesudahnya
+    const hum = clamp(79 - 3.5 * (temp - 27.5) + (raining ? 12 : 0) + 9 * pre + (h01(t, seed, 5) - 0.5) * 3, 40, 100);
     const pressure =
-      985 + 1.5 * Math.sin((2 * Math.PI * (t / HOUR - 4)) / 12) - 1.4 * pre + (h01(t, seed, 6) - 0.5) * 0.2;
+      // pasang surut atmosfer tropis: maksimum ~10.00 dan ~22.00 WIB, minimum ~04.00 dan ~16.00 WIB
+      985 + 1.0 * Math.cos((2 * Math.PI * (wibH - 10)) / 12) - 1.4 * pre + (h01(t, seed, 6) - 0.5) * 0.2;
     const daylight = wibH >= 6 && wibH < 18 ? Math.sin((Math.PI * (wibH - 6)) / 12) : 0;
     const lux = Math.round(Math.max(0, 60000 * daylight * (raining ? 0.2 : 1) * (0.9 + h01(t, seed, 7) * 0.2)));
     const analog = raining ? 1200 + h01(t, seed, 8) * 400 : 3900 + (h01(t, seed, 9) - 0.5) * 300;

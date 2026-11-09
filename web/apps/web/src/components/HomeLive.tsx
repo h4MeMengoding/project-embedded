@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { isOnline } from '../lib/online';
 import { deriveHomeState } from '../lib/homeState';
 import type { LiveData } from '../lib/liveTypes';
@@ -10,7 +11,7 @@ import { SensorStrip } from './SensorStrip';
 export function HomeLive({ initial, wsUrl, bmkgNow, threshold, offlineAfterSec }: {
   initial: LiveData;
   wsUrl: string | null;
-  bmkgNow: { weatherCode: number | null; weatherDesc: string | null } | null;
+  bmkgNow: { weatherCode: number | null; weatherDesc: string | null; slotLabel?: string | null } | null;
   threshold: number;
   offlineAfterSec: number;
 }) {
@@ -29,6 +30,23 @@ export function HomeLive({ initial, wsUrl, bmkgNow, threshold, offlineAfterSec }
     () => deriveHomeState({ reading: live.reading, prediction: live.prediction, bmkgNow, device: live.device, threshold }),
     [live, bmkgNow, threshold],
   );
+  // notifikasi perangkat: toast permanen selama offline, hilang + toast sukses saat kembali online
+  const prevKind = useRef<string | null>(null);
+  useEffect(() => {
+    if (state.kind === 'empty') return;
+    const offline = state.kind === 'offline';
+    if (offline) {
+      toast.error('Perangkat terputus', {
+        id: 'device-offline',
+        duration: Infinity,
+        description: `${state.lastSeenLabel ?? 'Belum pernah terlihat'}. Nilai sensor bukan data terkini.`,
+      });
+    } else {
+      toast.dismiss('device-offline');
+      if (prevKind.current === 'offline') toast.success('Perangkat kembali online');
+    }
+    prevKind.current = state.kind;
+  }, [state]);
   return (
     <>
       <HeroPrediction state={state} predictionTs={live.prediction?.ts ?? null} />

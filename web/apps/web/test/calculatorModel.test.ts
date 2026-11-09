@@ -13,3 +13,13 @@ describe('buildCalculatorModel', () => {
   it('throws without temp and dpd', () => expect(() => buildCalculatorModel({ deltaP3h: 0, rh: 70 })).toThrow());
   it('throws on out-of-range RH', () => expect(() => buildCalculatorModel({ deltaP3h: 0, rh: 140, dpd: 3 })).toThrow());
 });
+
+import { runFuzzy, dewPointDepression } from '@ws/core';
+describe('kalkulator = mesin fuzzy beranda', () => {
+  it('masukan sama (ΔP +1,3; RH 86; suhu 25,4) memberi peluang dan kategori yang sama', () => {
+    const m = buildCalculatorModel({ deltaP3h: 1.3, rh: 86, temp: 25.4 });
+    const r = runFuzzy({ deltaP3h: 1.3, rh: 86, dpd: dewPointDepression(25.4, 86) });
+    expect(m.result.probability).toBe(r.probability);
+    expect(m.result.category).toBe(r.category);
+  });
+});

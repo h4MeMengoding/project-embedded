@@ -225,8 +225,11 @@ Mesin fuzzy harus berupa **fungsi murni, deterministik, tanpa library fuzzy ekst
 
 ### 7.1 Variabel input (dihitung dari `readings_minute`)
 
-1. **ΔP3h (hPa)** = rata-rata tekanan 10 menit terakhir − rata-rata tekanan 10 menit yang berakhir tepat 3 jam sebelumnya.
-   Jika salah satu jendela memiliki < 5 menit data valid → status `insufficient_data`.
+1. **ΔP3h (hPa), terkoreksi (v2)** = ΔP3h teramati − koreksi variasi harian.
+   - ΔP3h teramati = rata-rata tekanan 10 menit terakhir − rata-rata tekanan 10 menit yang berakhir tepat 3 jam sebelumnya.
+   - Koreksi variasi harian (pasang surut atmosfer semidiurnal): `P_tide(h) = A·cos(2π(h − h_puncak)/12)` dengan `h` jam WIB, `A` = 1,0 hPa (nilai awal tipikal wilayah tropis; hanya boleh disetel dari periode kalibrasi), `h_puncak` = 10 (puncak 10.00 dan 22.00 WIB, titik terendah 04.00 dan 16.00 WIB). Koreksi = `P_tide(c) − P_tide(c − 3 jam)` dengan `c` = waktu prediksi − 4 menit (pusat jendela data). Alasan: tanpa koreksi, penurunan tekanan alami dini hari dan sore terbaca sebagai sinyal hujan (alarm palsu dini hari).
+   - Jika salah satu jendela memiliki < 5 menit data valid → status `insufficient_data`.
+   - `fuzzy_predictions.delta_p3h` menyimpan nilai terkoreksi (masukan fuzzy yang sebenarnya).
 2. **RH (%)** = rata-rata kelembapan DHT22 10 menit terakhir.
 3. **DPD (°C)** = suhu − titik embun, dari rata-rata suhu DHT22 dan RH 10 menit terakhir.
    Titik embun (rumus Magnus, a = 17.62, b = 243.12):
@@ -234,7 +237,7 @@ Mesin fuzzy harus berupa **fungsi murni, deterministik, tanpa library fuzzy ekst
 
 **BH1750 dan sensor hujan TIDAK menjadi input fuzzy.** Lux hanya ditampilkan sebagai data pendukung (nilainya nol di malam hari).
 
-### 7.2 Fungsi keanggotaan (config versi `v1`)
+### 7.2 Fungsi keanggotaan (config versi `v2`; identik dengan `v1`, yang berubah hanya masukan ΔP3h dan aturan keputusan biner)
 
 `trap(a,b,c,d)` = trapesium, `tri(a,b,c)` = segitiga. Nilai di luar semesta di-*clamp* ke batas semesta.
 
@@ -245,7 +248,7 @@ Mesin fuzzy harus berupa **fungsi murni, deterministik, tanpa library fuzzy ekst
 | DPD (°C) | [0, 30] | **Kecil** trap(0,0,1.5,3) · **Sedang** tri(2,4,6) · **Besar** trap(5,8,30,30) |
 | Peluang hujan (%) | [0, 100] | **Rendah** trap(0,0,20,40) · **Sedang** tri(30,50,70) · **Tinggi** trap(60,80,100,100) |
 
-### 7.3 Basis aturan (27 aturan, versi `v1`)
+### 7.3 Basis aturan (27 aturan, versi `v1` dan `v2` sama)
 
 Format: JIKA ΔP3h = X DAN RH = Y DAN DPD = Z MAKA Peluang = W.
 
@@ -287,9 +290,11 @@ Format: JIKA ΔP3h = X DAN RH = Y DAN DPD = Z MAKA Peluang = W.
 5. **Defuzzifikasi:** **centroid** pada semesta output 0–100 dengan langkah 0,5.
 6. Jika semua kekuatan aturan = 0, hasil = 0 dan catat sebagai kasus khusus.
 7. **Kategori:** kategori output dengan derajat keanggotaan tertinggi pada nilai crisp.
-8. **Prediksi hujan (biner):** `predict_rain = probability ≥ PREDICT_THRESHOLD` (default **50**).
+8. **Prediksi hujan (biner), v2:** peluang dibulatkan ke 1 desimal terlebih dahulu, lalu `predict_rain = round1(probability) > PREDICT_THRESHOLD` (default **50**; tepat 50,0 dinyatakan tidak hujan). Pada v1 aturannya `≥ 50`.
 
 ### 7.5 Aturan penting
+- Riwayat versi: **v1** = ΔP3h mentah, ambang `≥ 50`. **v2** = ΔP3h terkoreksi variasi harian, ambang `> 50` dengan pembulatan 1 desimal; fungsi keanggotaan dan 27 aturan tidak berubah. Konfigurasi aktif: `ACTIVE_FUZZY_CONFIG` (v2).
+- **v3 (kandidat, BELUM aktif):** sama dengan v2 kecuali R16 (Stabil, RH Tinggi, DPD Kecil): Tinggi → Sedang, dengan prinsip "peluang Tinggi hanya jika tekanan turun". Diaktifkan hanya setelah keputusan model utama dari laporan kalibrasi; v2, v3, dan ambang `> 50` (pembulatan 1 desimal) dibekukan sebelum `EVAL_START`. Catatan: pada tekanan stabil dan RH jenuh, v3 menghasilkan peluang tepat 50,0, sehingga keputusannya bergantung pada aturan `>` dan pembulatan.
 - Semua parameter di atas disimpan di `fuzzyConfig.ts` dengan **`config_version`**. Setiap prediksi menyimpan versi config yang dipakai.
 - **Integritas penelitian:** parameter fuzzy hanya boleh diubah **sebelum** periode evaluasi dimulai. Dashboard harus menampilkan versi config yang aktif.
 - Fungsi utama mengembalikan objek lengkap: input, derajat keanggotaan, kekuatan tiap aturan, himpunan output yang terpotong, nilai crisp, kategori. Objek ini dipakai untuk penjelasan di dashboard dan makalah.
@@ -329,7 +334,15 @@ Format: JIKA ΔP3h = X DAN RH = Y DAN DPD = Z MAKA Peluang = W.
 
 ### 9.4 Metrik
 Untuk fuzzy dan BMKG masing-masing, hitung **confusion matrix** (TP, FP, TN, FN), **accuracy, precision, recall, F1-score**, beserta jumlah slot yang dievaluasi. Tangani pembagian dengan nol (tampilkan "—").
-Periode evaluasi diatur lewat env `EVAL_START` dan `EVAL_END` (ISO, WIB), juga bisa dipilih di dashboard.
+- **F1 = 2TP / (2TP + FP + FN)**; "—" hanya jika TP, FP, dan FN semuanya 0.
+- **Himpunan slot yang sama:** metrik fuzzy dan BMKG hanya dihitung pada slot yang telah selesai, berdata sensor lengkap, dan memiliki prediksi fuzzy serta prakiraan BMKG sekaligus. Dashboard menampilkan jumlah slot yang dikecualikan beserta alasannya: periode kalibrasi, belum dimulai, sedang berjalan, data tidak lengkap, tanpa prediksi fuzzy, tanpa prakiraan BMKG. Slot sedang berjalan diberi label "sedang berjalan", bukan "data tidak lengkap".
+Periode evaluasi diatur lewat env `EVAL_START` dan `EVAL_END` (ISO, WIB), juga bisa dipilih di dashboard. Jika kosong, dashboard menampilkan "Semua data".
+
+### 9.4a Periode kalibrasi
+- Env `CALIB_START` dan `CALIB_END` (ISO, WIB; 1–2 hari pertama data sungguhan). `CALIB_END` harus ≤ `EVAL_START`.
+- Parameter fuzzy (mis. amplitudo koreksi tekanan) **hanya boleh disesuaikan berdasarkan periode kalibrasi**. Setelah `EVAL_START` parameter dibekukan (lihat 7.5).
+- Slot yang beririsan dengan periode kalibrasi dikecualikan dari metrik makalah, apa pun rentang yang dipilih di dashboard.
+- **Laporan kalibrasi:** `npm run calib:report` (dari `web/`; opsi `--from`, `--to`, `--device`, `--out`) menulis `web/reports/kalibrasi-<device>-<tanggal>.md` dan `.csv` dari `CALIB_START`–`CALIB_END`: rata-rata RH, DPD, ΔP3h terkoreksi/mentah per jam WIB; laju alarm palsu dan recall per jam untuk v2 dan simulasi v3; ringkasan menit; estimasi harmonik 12 jam tekanan (amplitudo, puncak) sebagai dasar penyetelan; masukan fuzzy 3 jam sebelum tiap kejadian hujan. Label hujan memakai data 3 jam berikutnya yang berada di dalam periode (tanpa kebocoran data). Laporan ini bahan keputusan, bukan metrik makalah.
 
 ### 9.5 Keandalan sistem
 - **Kelengkapan data** = jumlah record `readings_minute` / jumlah menit yang seharusnya dalam periode (%), per hari dan total.
@@ -351,6 +364,8 @@ BMKG_ADM4=                      # WAJIB diisi pengguna, jangan ditebak
 BMKG_SLOT_MODE=start
 PREDICT_THRESHOLD=50
 RAIN_MIN_WET_MINUTES=10
+CALIB_START=                    # 1-2 hari pertama data sungguhan
+CALIB_END=                      # harus <= EVAL_START
 EVAL_START=                     # contoh 2026-11-20T00:00:00+07:00
 EVAL_END=
 DEVICE_OFFLINE_AFTER_SEC=180

@@ -1,4 +1,5 @@
-import { getDeviceStatus, getEvaluation } from '@ws/db';
+import { formatWib } from '@ws/core';
+import { getEvaluation } from '@ws/db';
 import { getDb } from '@/lib/db';
 import { getEnv } from '@/lib/env';
 import { NavBar } from '@/components/NavBar';
@@ -9,6 +10,7 @@ import { ConfusionMatrix } from '@/components/evaluation/ConfusionMatrix';
 import { MetricsTable } from '@/components/evaluation/MetricsTable';
 import { Assumptions } from '@/components/evaluation/Assumptions';
 import { RecomputeButton } from '@/components/evaluation/RecomputeButton';
+import { LuDownload } from 'react-icons/lu';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Evaluasi · Stasiun Cuaca' };
@@ -26,38 +28,53 @@ export default async function Evaluasi({ searchParams }: { searchParams: Promise
   // default: EVAL_START–EVAL_END; kosong -> seluruh jendela data
   const from = pick(sp, 'from', env.evalStart ?? new Date(0));
   const to = pick(sp, 'to', env.evalEnd ?? now);
-  const [ev, device] = await Promise.all([
-    getEvaluation(db, env.deviceId, from, to),
-    getDeviceStatus(db, env.deviceId, env.offlineAfterSec, now),
-  ]);
+  const ev = await getEvaluation(db, env.deviceId, from, to, now, { start: env.calibStart, end: env.calibEnd });
+  const hasFrom = Boolean(sp.from || env.evalStart);
+  const hasTo = Boolean(sp.to || env.evalEnd);
+  const summary = hasFrom || hasTo
+    ? `${hasFrom ? formatWib(from, 'datetime') : 'awal data'} – ${hasTo ? formatWib(to, 'datetime') : 'sekarang'} WIB`
+    : 'Semua data';
   const q = `from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`;
   return (
     <>
       <HeroBand>
         <PageShell>
-          <NavBar active="evaluasi" online={device.online} deviceId={env.deviceId} />
-          <div style={{ padding: '40px 0 120px', display: 'grid', gap: 20 }}>
-            <h1 style={{ fontSize: 40, fontWeight: 800 }}>Evaluasi</h1>
-            <p style={{ opacity: 0.85 }}>Prediksi hujan 3 jam: fuzzy Mamdani vs prakiraan BMKG, dibandingkan dengan sensor hujan. Sumber: BMKG</p>
-            <RangePicker preset="custom" basePath="/evaluasi" showPresets={false} />
+          <NavBar active="evaluasi" />
+          <div style={{ padding: '40px 0 120px', display: 'grid', gap: 24 }}>
+            <div className="page-head">
+              <div>
+                <h1>Evaluasi</h1>
+                <p>Perbandingan kinerja prediksi hujan 3 jam ke depan antara fuzzy Mamdani dan prakiraan BMKG, dengan sensor hujan sebagai acuan kejadian aktual. Sumber: BMKG</p>
+              </div>
+              <div className="page-actions">
+                <RecomputeButton />
+                <a className="btn btn-light" href={`/api/export/evaluation?${q}`}><LuDownload aria-hidden="true" />Unduh CSV</a>
+              </div>
+            </div>
+            <RangePicker
+              preset="custom"
+              basePath="/evaluasi"
+              showPresets={false}
+              from={hasFrom ? from.toISOString() : undefined}
+              to={hasTo ? to.toISOString() : undefined}
+              summary={summary}
+              resetHref={sp.from || sp.to ? '/evaluasi' : undefined}
+              resetLabel={env.evalStart || env.evalEnd ? 'Kembali ke periode evaluasi' : 'Tampilkan semua data'}
+            />
           </div>
         </PageShell>
       </HeroBand>
       <PageShell>
         <div className="grid gap-7" style={{ marginTop: -90, position: 'relative', zIndex: 3 }}>
-          <div className="grid gap-7 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-7 lg:grid-cols-2">
             <ConfusionMatrix title="Fuzzy Mamdani" cm={ev.fuzzy.cm} />
             <ConfusionMatrix title="BMKG (Sumber: BMKG)" cm={ev.bmkg.cm} />
           </div>
-          <MetricsTable fuzzy={ev.fuzzy.metrics} bmkg={ev.bmkg.metrics} />
+          <MetricsTable fuzzy={ev.fuzzy.metrics} bmkg={ev.bmkg.metrics} excluded={ev.excluded} />
           <SlotTable slots={ev.slots} />
           <Assumptions minWet={env.rainMinWetMinutes} threshold={env.predictThreshold} slotMode={env.slotMode} />
-          <div className="flex flex-wrap items-center gap-4">
-            <RecomputeButton />
-            <a className="rounded-full px-5 py-3 font-bold bg-[var(--ink)] text-[var(--page)]" href={`/api/export/evaluation?${q}`}>Unduh CSV</a>
-          </div>
         </div>
-        <div className="stamp">Semua waktu dalam WIB</div>
+        <div className="stamp" />
       </PageShell>
     </>
   );

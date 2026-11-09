@@ -28,18 +28,23 @@ describe('deriveHomeState', () => {
   });
   it('fuzzy rain, bmkg dry', () => {
     const s = deriveHomeState({ ...base, bmkgNow: { weatherCode: 3, weatherDesc: 'Berawan' } });
-    expect(s.kind === 'ok' && s.agreement).toBe('BMKG memperkirakan tidak hujan');
+    expect(s.kind === 'ok' && s.agreement).toBe('Fuzzy dan BMKG berbeda');
   });
   it('bmkg null', () => {
     const s = deriveHomeState({ ...base, bmkgNow: null });
     expect(s.kind === 'ok' && s.agreement).toBe('Prakiraan BMKG belum tersedia');
   });
-  it('wet >= 30 -> sedang hujan', () => {
+  it('wet >= 30 -> basah', () => {
     const s = deriveHomeState({ ...base, reading: reading({ rainWetSeconds: 30 }) });
-    expect(s.kind === 'ok' && s.current).toBe('Saat ini sedang hujan');
+    expect(s.kind === 'ok' && s.current).toBe('Sensor hujan: basah');
   });
   it('ok headline and percent', () => {
     const s = deriveHomeState(base);
-    expect(s).toMatchObject({ kind: 'ok', percent: 72, headline: 'Kemungkinan besar akan turun hujan' });
+    expect(s).toMatchObject({ kind: 'ok', percent: 72, headline: 'Peluang hujan tinggi' });
+  });
+  it('verdict, tone and slot label', () => {
+    const s = deriveHomeState({ ...base, prediction: pred({ probability: 51, predictRain: true, deltaP3h: -1.2 }), bmkgNow: { weatherCode: 3, weatherDesc: 'Berawan', slotLabel: '22.00–01.00' } });
+    expect(s).toMatchObject({ verdict: 'Prediksi: Hujan (ambang > 50%)', agreementTone: 'bad', agreement: 'Fuzzy dan BMKG berbeda (slot 22.00–01.00)' });
+    expect(s.kind !== 'empty' && s.sensors.deltaP3h).toBe(-1.2);
   });
 });

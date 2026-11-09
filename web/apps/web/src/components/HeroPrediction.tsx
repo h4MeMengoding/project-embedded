@@ -8,8 +8,8 @@ export function HeroPrediction({ state, predictionTs }: { state: HomeState; pred
   if (state.kind === 'empty') {
     return (
       <div className="hero">
-        <div className="empty-card">Belum ada data. Jalankan seed atau hubungkan perangkat.</div>
-        <StationIllustration />
+        <div className="empty-card">Data belum tersedia. Hubungkan perangkat atau jalankan seed data.</div>
+        <StationIllustration online={false} />
       </div>
     );
   }
@@ -18,19 +18,23 @@ export function HeroPrediction({ state, predictionTs }: { state: HomeState; pred
     : '3 jam ke depan';
   return (
     <div className="hero">
-      <div className="hero-main">
-        <RingGauge percent={state.percent} />
+      <div className={`hero-main${state.kind === 'offline' ? ' stale' : ''}`} data-aos="fade-up">
+        <RingGauge percent={state.percent} label={state.kind === 'offline' ? 'data tidak terkini' : undefined} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div className="eyebrow">{range}</div>
-          <div className="lead">{state.headline}</div>
+          <div>
+            <div className="lead">{state.headline}</div>
+            {state.verdict && <div className="verdict">{state.verdict}</div>}
+          </div>
           <div className="pills">
-            {state.agreement && <Pill tone="white">{state.agreement}</Pill>}
+            {state.agreement && <Pill tone={state.agreementTone === 'bad' ? 'whitebad' : 'white'}>{state.agreement}</Pill>}
             <Pill tone="warn">{state.current}</Pill>
-            {state.kind === 'offline' && <Pill tone="warn">Perangkat offline{state.lastSeenLabel ? ` · ${state.lastSeenLabel}` : ''}</Pill>}
+            {state.kind !== 'offline' && <span className="pill-status"><Pill tone="ok">Perangkat online{state.lastSeenTime ? ` · ${state.lastSeenTime} WIB` : ''}</Pill></span>}
+            {state.kind === 'offline' && <span className="pill-status"><Pill tone="warn">Perangkat offline{state.lastSeenLabel ? ` · ${state.lastSeenLabel}` : ''}</Pill></span>}
           </div>
         </div>
       </div>
-      <StationIllustration />
+      <StationIllustration online={state.kind !== 'offline'} />
     </div>
   );
 }

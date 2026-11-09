@@ -58,3 +58,22 @@ describe('generateBmkg', () => {
     expect(a.map((r) => r.weatherDesc)).not.toEqual(b.map((r) => r.weatherDesc));
   });
 });
+
+describe('fase tekanan tropis', () => {
+  it('maksimum ~10.00/22.00 WIB dan minimum ~04.00/16.00 WIB', () => {
+    const { minutes } = generateSeries({ end: new Date('2026-11-07T17:00:00Z'), days: 5, seed: 42, scenario: 'normal' });
+    const sum = new Array(24).fill(0), n = new Array(24).fill(0);
+    for (const m of minutes) {
+      const h = new Date(m.ts.getTime() + 7 * 3600_000).getUTCHours();
+      sum[h] += m.pressureHpa; n[h]++;
+    }
+    const avg = sum.map((s, i) => s / n[i]);
+    const arg = (hs: number[], max: boolean) => hs.reduce((best, h) => ((max ? avg[h % 24] > avg[best % 24] : avg[h % 24] < avg[best % 24]) ? h : best), hs[0]) % 24;
+    expect(Math.abs(arg([7, 8, 9, 10, 11, 12], true) - 10)).toBeLessThanOrEqual(1);
+    expect(Math.abs(arg([19, 20, 21, 22, 23, 24], true) - 22)).toBeLessThanOrEqual(1);
+    expect(Math.abs(arg([2, 3, 4, 5, 6], false) - 4)).toBeLessThanOrEqual(1);
+    // minimum sore dipercepat oleh penurunan tekanan pra-hujan konvektif (14.00-16.00)
+    expect(arg([13, 14, 15, 16, 17], false)).toBeGreaterThanOrEqual(14);
+    expect(arg([13, 14, 15, 16, 17], false)).toBeLessThanOrEqual(16);
+  });
+});
