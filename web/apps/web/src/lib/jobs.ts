@@ -2,6 +2,7 @@ import { getActiveAdm4, recomputeEvaluation, type Db } from '@ws/db';
 import { getDb } from './db';
 import { getEnv } from './env';
 import { runBmkgJob } from './bmkgJob';
+import { getModeCached } from './mode';
 
 export async function runEvaluationJob(db: Db): Promise<{ slots: number }> {
   const env = getEnv();
@@ -21,8 +22,9 @@ export async function runActiveBmkgJob(): Promise<number> {
   return runBmkgJob(db, await getActiveAdm4(db, getEnv().adm4));
 }
 
+// Mode dev: tidak ada data yang disimpan, jadi cron BMKG dan evaluasi berhenti.
 const safe = (name: string, fn: () => Promise<unknown>) =>
-  fn().catch((e) => console.error(`[jobs] ${name} gagal:`, e instanceof Error ? e.message : e));
+  getModeCached(getDb()).then((m) => (m === 'dev' ? null : fn())).catch((e) => console.error(`[jobs] ${name} gagal:`, e instanceof Error ? e.message : e));
 
 /**
  * Cron di dalam proses Next.js (web berjalan terus di VPS; asumsi satu instance).

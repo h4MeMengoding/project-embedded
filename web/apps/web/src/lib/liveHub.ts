@@ -5,6 +5,7 @@ import type { SensorFlags } from '@ws/core';
 
 export type LiveReadingJson = {
   ts: string; tempDht: number | null; humDht: number | null; pressureHpa: number | null; lux: number | null; rainWetSeconds: number | null;
+  tempBmp?: number | null; rainAnalog?: number | null;
 };
 export type LiveEvent =
   | { type: 'live'; deviceId: string; lastSeenAt: string; sensors: SensorFlags; reading: LiveReadingJson | null }

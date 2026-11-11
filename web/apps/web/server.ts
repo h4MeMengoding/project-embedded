@@ -6,6 +6,7 @@ import next from 'next';
 import { devices, ingestPayload, verifyToken } from '@ws/db';
 import { getDb } from './src/lib/db';
 import { getEnv } from './src/lib/env';
+import { getModeCached } from './src/lib/mode';
 import { attachWebSockets } from './src/lib/wsServer';
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -26,7 +27,15 @@ async function main() {
       return row?.tokenHash ?? null;
     },
     verifyToken,
-    ingest: (p, now) => ingestPayload(getDb(), p.device_id, p, now, getEnv().predictThreshold),
+    ingest: async (p, now) => {
+      const db = getDb();
+      if ((await getModeCached(db)) === 'dev') {
+        // Dev: record di-ack tapi dibuang (backlog ESP tidak menumpuk); hanya status perangkat yang ditulis.
+        await ingestPayload(db, p.device_id, { ...p, records: [] }, now);
+        return { stored: 0, duplicates: p.records.length };
+      }
+      return ingestPayload(db, p.device_id, p, now, getEnv().predictThreshold);
+    },
   }, app.getUpgradeHandler());
 
   server.listen(port, () => console.log(`> http://localhost:${port}  ws: /ws/device, /ws/live (${dev ? 'dev' : 'produksi'})`));

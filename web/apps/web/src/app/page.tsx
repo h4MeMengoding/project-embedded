@@ -1,11 +1,12 @@
 import { formatWib, slotBounds } from '@ws/core';
-import { getActiveAdm4, getBmkgSlots, getDeviceStatus, getLatestPrediction, getLatestReading, getRainIntervals, getSeries } from '@ws/db';
+import { getActiveAdm4, getMode, getBmkgSlots, getDeviceStatus, getLatestPrediction, getLatestReading, getRainIntervals, getSeries } from '@ws/db';
 import { selectCurrentSlots } from '@/lib/currentSlots';
 import { getDb } from '@/lib/db';
 import { getEnv } from '@/lib/env';
 import { NavBar } from '@/components/NavBar';
 import { HeroBand, PageShell } from '@/components/PageShell';
 import { HomeLive } from '@/components/HomeLive';
+import { DevHome } from '@/components/DevHome';
 import { BmkgCard } from '@/components/BmkgCard';
 import { ProbabilityHistoryCard } from '@/components/ProbabilityHistoryCard';
 import { RainActivityCard } from '@/components/RainActivityCard';
@@ -21,6 +22,16 @@ export default async function Home() {
   const env = getEnv();
   const db = getDb();
   const now = new Date();
+  if ((await getMode(db)) === 'dev') {
+    return (
+      <HeroBand>
+        <PageShell>
+          <NavBar active="beranda" />
+          <DevHome />
+        </PageShell>
+      </HeroBand>
+    );
+  }
   const adm4 = await getActiveAdm4(db, env.adm4);
   const [reading, prediction, device, allSlots, series, intervals] = await Promise.all([
     getLatestReading(db, env.deviceId),

@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { getDeviceStatus, getSetting, listFirmware } from '@ws/db';
+import { getDeviceStatus, getMode, getSetting, listFirmware } from '@ws/db';
 import { formatWib } from '@ws/core';
 import { getDb } from '@/lib/db';
 import { getEnv } from '@/lib/env';
@@ -9,6 +9,7 @@ import { HeroBand, PageShell } from '@/components/PageShell';
 import { Card } from '@/components/Card';
 import { LoginForm, LogoutButton } from '@/components/settings/LoginForm';
 import { RegionPicker } from '@/components/settings/RegionPicker';
+import { ModeCard, ResetCard } from '@/components/settings/ModeCard';
 import { FirmwareCard } from '@/components/settings/FirmwareCard';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +20,7 @@ export default async function Pengaturan() {
   const db = getDb();
   const pw = process.env.ADMIN_PASSWORD;
   const admin = isAdmin((await cookies()).get(ADMIN_COOKIE)?.value, pw);
-  const [adm4, location] = await Promise.all([getSetting(db, 'bmkg_adm4'), getSetting(db, 'bmkg_location')]);
+  const [adm4, location, mode] = await Promise.all([getSetting(db, 'bmkg_adm4'), getSetting(db, 'bmkg_location'), getMode(db)]);
   const locked = isRegionLocked(env.evalStart, new Date());
   const [images, device] = admin
     ? await Promise.all([listFirmware(db), getDeviceStatus(db, env.deviceId, env.offlineAfterSec, new Date())])
@@ -36,6 +37,12 @@ export default async function Pengaturan() {
       </HeroBand>
       <PageShell>
         <div className="grid gap-7" style={{ marginTop: -90, position: 'relative', zIndex: 3 }}>
+          <Card tone="light" title="Mode operasi" subtitle="Prod menyimpan data penelitian; dev hanya menampilkan pembacaan sensor live tanpa menyimpan">
+            <div className="li">
+              <span><small>Mode aktif</small><br /><b>{mode === 'prod' ? 'Produksi (data disimpan)' : 'Dev (data tidak disimpan)'}</b></span>
+            </div>
+            {admin && <ModeCard mode={mode} />}
+          </Card>
           <Card tone="light" title="Wilayah prakiraan BMKG" subtitle="Kelurahan lokasi stasiun; dipakai untuk mengambil dan membandingkan prakiraan BMKG">
             <div className="li">
               <span>
@@ -58,8 +65,14 @@ export default async function Pengaturan() {
                 <div className="mt-6"><LogoutButton /></div>
               </>
             )}
+            {mode === 'prod' && !activeCode && <p className="mt-4 text-sm font-semibold">Mode produksi aktif tetapi wilayah belum disetel: pilih wilayah di atas.</p>}
             <p className="mt-6 text-xs text-[var(--muted)]">Sumber: BMKG. Daftar wilayah: kode Kemendagri via wilayah.id.</p>
           </Card>
+          {admin && mode === 'prod' && (
+            <Card tone="light" title="Reset database" subtitle="Untuk mengulang penelitian dari awal">
+              <ResetCard />
+            </Card>
+          )}
           {admin && device && (
             <Card tone="light" title="Pembaruan firmware (OTA)" subtitle="Unggah firmware.bin, lalu kirim ke ESP32 yang sedang online">
               <FirmwareCard

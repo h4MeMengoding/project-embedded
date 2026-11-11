@@ -1,5 +1,5 @@
 import type { SensorFlags } from '@ws/core';
-export type LiveReading = { ts: Date; tempDht: number | null; humDht: number | null; pressureHpa: number | null; lux: number | null; rainWetSeconds: number | null };
+export type LiveReading = { ts: Date; tempDht: number | null; humDht: number | null; pressureHpa: number | null; lux: number | null; rainWetSeconds: number | null; tempBmp?: number | null; rainAnalog?: number | null };
 export type LivePrediction = { ts: Date; status: string; probability: number | null; category: string | null; predictRain: boolean | null; configVersion?: string; deltaP3h?: number | null };
 export type LiveDevice = { online: boolean; lastSeenAt: Date | null; sensors?: SensorFlags | null };
 export type LiveData = { reading: LiveReading | null; prediction: LivePrediction | null; device: LiveDevice };

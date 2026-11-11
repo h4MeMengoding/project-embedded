@@ -418,6 +418,8 @@ Bahasa Indonesia, tampilan bersih, responsif (bisa dibuka di HP), mode terang/ge
 ### 11.5a Pengaturan `/pengaturan`
 - Login `ADMIN_PASSWORD` (cookie httpOnly). Halaman lain tetap publik.
 - Pemilihan wilayah BMKG bertingkat, cek ke BMKG, simpan. Terkunci setelah `EVAL_START`.
+- **Mode operasi (2026-11-11)**, `app_config.mode` (`prod` default, bukan `app_config.environment`). **Prod:** perilaku normal; memilih prod wajib wilayah BMKG sudah disetel (jika belum, diminta memilih dulu). **Dev:** record ESP32 di-ack lalu dibuang (hanya status perangkat ditulis), cron BMKG dan evaluasi berhenti, Beranda hanya menampilkan pembacaan live semua sensor. Dev tidak bisa dipilih setelah `EVAL_START`.
+- **Reset database** (hanya mode prod, ketik `RESET`): hapus `readings_minute`, `rain_events`, `fuzzy_predictions`, `bmkg_forecasts`, `evaluation_slots`; perangkat/token, wilayah, firmware, dan pengaturan tetap. Dipakai untuk mengulang penelitian.
 
 ### 11.6 Ekspor CSV
 Route handler `/api/export/{readings|rain-events|predictions|bmkg|evaluation}?from=&to=` → CSV dengan header jelas, waktu dalam dua kolom (UTC dan WIB). Tombol unduh di halaman Riwayat dan Evaluasi.

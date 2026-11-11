@@ -20,7 +20,7 @@ async function load(level: string, code?: string): Promise<Item[]> {
 }
 
 /** Dropdown bertingkat (bisa diketik untuk menyaring) → cek ke BMKG → simpan. */
-export function RegionPicker() {
+export function RegionPicker({ onSaved }: { onSaved?: () => void } = {}) {
   const router = useRouter();
   const [lists, setLists] = useState<Item[][]>([[], [], [], []]);
   const [text, setText] = useState(['', '', '', '']);
@@ -69,6 +69,7 @@ export function RegionPicker() {
         toast.success(`Wilayah disimpan: ${j.label}. ${j.stored} prakiraan baru diambil.`);
         setPreview(null);
         router.refresh();
+        onSaved?.();
       }
     } finally {
       setBusy(false);

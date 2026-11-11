@@ -78,6 +78,7 @@ function onDevice(ws: WebSocket, deps: WsDeps, sockets: Map<string, WebSocket>) 
       reading: l ? {
         ts: new Date(l.ts != null ? l.ts * 1000 : nowMs).toISOString(), tempDht: l.temp_dht, humDht: l.hum_dht,
         pressureHpa: l.pressure_hpa, lux: l.lux, rainWetSeconds: l.rain_wet ? 60 : 0,
+        tempBmp: l.temp_bmp, rainAnalog: l.rain_analog,
       } : null,
     }, deps.offlineAfterSec);
     if (r.stored > 0 && p.records.some((x) => x.type === 'minute')) publish({ type: 'minute', deviceId: dev });
