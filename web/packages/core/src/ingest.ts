@@ -4,6 +4,8 @@ export type SensorFlags = { dht22: boolean; bmp280: boolean; bh1750: boolean; ra
 export type IngestStatus = {
   ts: number | null; rssi: number; uptime_s: number; heap_free: number; backlog: number;
   buffer_full: boolean; time_valid: boolean; sensors: SensorFlags;
+  /** IPv4 perangkat di LAN; null jika firmware lama tidak melaporkannya. */
+  ip: string | null;
 };
 export type MinuteRecord = {
   type: 'minute'; ts: number; temp_dht: number | null; hum_dht: number | null; temp_bmp: number | null;
@@ -63,6 +65,7 @@ export function parseIngestPayload(body: unknown, nowSec: number):
       rssi: int(s, 'rssi', -127, 0), uptime_s: int(s, 'uptime_s', 0, INT_MAX), heap_free: int(s, 'heap_free', 0, INT_MAX),
       backlog: int(s, 'backlog', 0, INT_MAX), buffer_full: bool(s, 'buffer_full'), time_valid: bool(s, 'time_valid'),
       sensors: { dht22: bool(sn, 'dht22'), bmp280: bool(sn, 'bmp280'), bh1750: bool(sn, 'bh1750'), rain: bool(sn, 'rain') },
+      ip: typeof s.ip === 'string' && /^\d{1,3}(\.\d{1,3}){3}$/.test(s.ip) ? s.ip : null,
     };
     if (!Array.isArray(b.records)) throw new Bad('records harus array');
     if (b.records.length > INGEST_MAX_RECORDS) throw new Bad(`maksimal ${INGEST_MAX_RECORDS} record`);

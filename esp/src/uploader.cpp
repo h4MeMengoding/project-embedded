@@ -5,10 +5,12 @@
 #include <WebSocketsClient.h>
 #include <esp_task_wdt.h>
 #include "config.h"
+#include "ota.h"
+#include "version.h"
 
 static const char* PENDING_PATH = "/pending.ndjson";
 static const char* OFFSET_PATH = "/pending.off";  // byte yang sudah diterima server
-static const size_t FILE_LIMIT = 1024 * 1024;  // 1 MB
+static const size_t FILE_LIMIT = 768 * 1024;  // 768 KB (partisi LittleFS ±960 KB, lihat partitions_ota.csv)
 static const size_t RAM_MAX = 30;
 static const size_t BATCH = 50;
 static const uint32_t BACKFILL_GAP_MS = 1000;   // jeda antar batch backfill (server: maks 120 pesan/menit)
@@ -52,7 +54,7 @@ static void appendToFile(const std::vector<String>& recs) {
   for (const String& r : recs) {
     if (size + r.length() + 1 > FILE_LIMIT) {
       bufferFull = true;
-      Serial.println("[buffer] PENUH (1 MB): record baru dibuang");
+      Serial.println("[buffer] PENUH (768 KB): record baru dibuang");
       break;
     }
     f.print(r);
@@ -175,6 +177,8 @@ static void handleText(uint8_t* payload, size_t length) {
         holdUntilMs = millis() + HOLD_AFTER_NACK_MS;
       }
     }
+  } else if (!strcmp(type, "ota")) {
+    otaSchedule(d["path"] | "", d["size"] | 0, d["md5"] | "");
   } else if (!strcmp(type, "error")) {
     Serial.printf("[ws] server: %s (periksa DEVICE_ID / DEVICE_TOKEN di config.h)\n", d["error"] | "?");
   }
@@ -305,6 +309,13 @@ static void uploaderConnect() {
   ws.onEvent(onEvent);
   ws.setReconnectInterval(5000);
   ws.enableHeartbeat(15000, 3000, 2);  // ping tiap 15 dtk; 2 pong terlewat = putus
+}
+
+void uploaderPrepareOta() {
+  failInflight();
+  if (!ram.empty()) { appendToFile(ram); ram.clear(); }
+  authed = false;
+  ws.disconnect();
 }
 
 uint32_t uploaderBacklog() { return fileLines + ram.size() + (inflight.active && !inflight.fromFile ? inflight.recs.size() : 0); }

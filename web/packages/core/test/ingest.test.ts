@@ -47,6 +47,12 @@ describe('parseIngestPayload', () => {
     const b = base(); b.records[0].rain_wet_seconds = 10.5; err(b);
     const c = base() as any; c.status.uptime_s = 1.5; err(c);
   });
+  it('ip valid disimpan, ip tidak valid/kosong jadi null', () => {
+    const ok = (ip: unknown) => { const b = base() as any; b.status.ip = ip; const r = parseIngestPayload(b, 1762500100); return r.ok ? r.value.status.ip : 'ERR'; };
+    expect(ok('10.10.1.25')).toBe('10.10.1.25');
+    expect(ok('bukan-ip')).toBeNull();
+    expect(ok(undefined)).toBeNull();
+  });
   it('status.ts di luar rentang ditolak', () => { const b = base() as any; b.status.ts = 1e15; err(b); });
   it('live opsional, nilai sensor terbaru', () => {
     const b = { ...base(), records: [], live: { ts: NOW, temp_dht: null, hum_dht: null, temp_bmp: 27.9, pressure_hpa: 985.3, lux: null, rain_analog: 4095, rain_wet: false } };

@@ -15,7 +15,7 @@ const minute = (i: number, extra: Partial<MinuteRecord> = {}): MinuteRecord => (
 });
 const payload = (deviceId: string, records: IngestPayload['records']): IngestPayload => ({
   device_id: deviceId, fw: '1.0.0',
-  status: { ts: T0, rssi: -60, uptime_s: 10, heap_free: 150000, backlog: 0, buffer_full: false, time_valid: true,
+  status: { ts: T0, rssi: -60, uptime_s: 10, heap_free: 150000, backlog: 0, buffer_full: false, time_valid: true, ip: '10.10.1.25',
     sensors: { dht22: false, bmp280: true, bh1750: false, rain: true } },
   records, live: null,
 });

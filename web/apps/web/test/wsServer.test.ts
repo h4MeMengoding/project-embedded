@@ -84,9 +84,19 @@ describe('/ws/device', () => {
     c.json(hello);
     await c.next();
     c.json(body());
-    c.json(body({ id: 2 }));
+    c.json(body({ id: 2, records: [minute(1794234900)] }));
     expect((await c.next()).id).toBe(2); // pesan pertama (tanpa id) tidak menghasilkan balasan
     expect(ingest).toHaveBeenCalledTimes(2);
+  });
+
+  it('pesan live tanpa record tidak menulis DB lebih dari sekali per 10 detik', async () => {
+    const c = await open('/ws/device');
+    c.json(hello);
+    await c.next();
+    for (let i = 0; i < 5; i++) c.json(body());
+    c.json(body({ id: 9, records: [minute(1794234900)] })); // record selalu ditulis
+    expect((await c.next()).id).toBe(9);
+    expect(ingest).toHaveBeenCalledTimes(2); // heartbeat pertama + pesan ber-record
   });
 
   it('nack permanen untuk payload tidak valid, dan nack tidak permanen jika DB gagal', async () => {
@@ -117,5 +127,18 @@ describe('/ws/device', () => {
 describe('/ws/live', () => {
   it('upgrade ke path lain ditolak', async () => {
     await expect(open('/ws/lain')).rejects.toBeDefined();
+  });
+});
+
+describe('sendToDevice (OTA)', () => {
+  it('meneruskan pesan ke perangkat tersambung; false jika tidak ada', async () => {
+    const { sendToDevice } = await import('../src/lib/deviceLink');
+    expect(sendToDevice('stasiun-t', { type: 'ota' })).toBe(false);
+    const d = await open('/ws/device');
+    d.json({ type: 'hello', device_id: 'stasiun-t', token: 'rahasia' });
+    expect((await d.next()).type).toBe('hello_ack');
+    expect(sendToDevice('stasiun-t', { type: 'ota', path: '/x' })).toBe(true);
+    expect(await d.next()).toEqual({ type: 'ota', path: '/x' });
+    d.ws.close();
   });
 });

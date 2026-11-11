@@ -21,6 +21,7 @@ export type DeviceStatus = {
   bufferFull: boolean | null;
   /** Sensor yang terdeteksi firmware; null jika perangkat belum pernah melapor. */
   sensors: SensorFlags | null;
+  ip: string | null;
 };
 
 export async function getLatestReading(db: Db, deviceId: string): Promise<ReadingRow | null> {
@@ -46,6 +47,7 @@ export async function getDeviceStatus(db: Db, deviceId: string, offlineAfterSec:
     fwVersion: d?.fwVersion ?? null,
     bufferFull: d?.lastBufferFull ?? null,
     sensors: (d?.lastSensors as SensorFlags | null | undefined) ?? null,
+    ip: d?.lastIp ?? null,
   };
 }
 

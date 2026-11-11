@@ -22,6 +22,20 @@
       "when": 1794234785207,
       "tag": "0002_device_sensors",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794331127327,
+      "tag": "0003_firmware_images",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794331535732,
+      "tag": "0004_device_ip",
+      "breakpoints": true
     }
   ]
 }

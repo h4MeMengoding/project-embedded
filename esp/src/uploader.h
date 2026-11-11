@@ -12,7 +12,9 @@ using StatusFiller = void (*)(JsonObject root);
 void uploaderBegin(StatusFiller fill);
 // Record JSON satu objek (tanpa newline). Masuk antrean RAM; jika penuh langsung ke file.
 void uploaderEnqueue(const String& record);
-// Panggil di loop (menjalankan klien WebSocket). sendNow=true tiap sampel (10 dtk): heartbeat status + live + antrean RAM.
+// Panggil di loop (menjalankan klien WebSocket). sendNow=true tiap 1 dtk: status + live + antrean RAM (record dikirim segera, tidak menunggu sendNow).
 void uploaderTick(bool sendNow);
 uint32_t uploaderBacklog();
 bool uploaderBufferFull();
+// Sebelum OTA: antrean RAM ke flash, putus WebSocket (tersambung ulang otomatis di loop berikutnya).
+void uploaderPrepareOta();

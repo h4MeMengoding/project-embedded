@@ -1,5 +1,5 @@
 import {
-  bigserial, boolean, doublePrecision, index, integer, jsonb, pgTable, serial, text,
+  bigserial, boolean, customType, doublePrecision, index, integer, jsonb, pgTable, serial, text,
   timestamp, uniqueIndex, bigint,
 } from 'drizzle-orm/pg-core';
 
@@ -20,6 +20,8 @@ export const devices = pgTable('devices', {
   lastBufferFull: boolean('last_buffer_full'),
   // Tambahan: sensor mana yang terdeteksi firmware ({dht22,bmp280,bh1750,rain}), untuk "belum terhubung".
   lastSensors: jsonb('last_sensors'),
+  // IP perangkat di LAN (dilaporkan firmware), ditampilkan di Pengaturan.
+  lastIp: text('last_ip'),
 });
 
 export const readingsMinute = pgTable(
@@ -133,3 +135,15 @@ export type BmkgRow = typeof bmkgForecasts.$inferSelect;
 export type EvaluationSlotRow = typeof evaluationSlots.$inferSelect;
 export type RainEventRow = typeof rainEvents.$inferSelect;
 export type DeviceRow = typeof devices.$inferSelect;
+
+const bytea = customType<{ data: Buffer }>({ dataType: () => 'bytea' });
+
+// Image firmware ESP32 yang diunggah dari dashboard untuk OTA (ESP32 menariknya lewat HTTPS).
+export const firmwareImages = pgTable('firmware_images', {
+  id: serial('id').primaryKey(),
+  version: text('version').notNull(),
+  size: integer('size').notNull(),
+  md5: text('md5').notNull(),
+  uploadedAt: tz('uploaded_at').notNull().defaultNow(),
+  data: bytea('data').notNull(),
+});

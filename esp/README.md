@@ -1,8 +1,8 @@
 # Firmware ESP32 — Stasiun Cuaca
 
 PlatformIO, framework Arduino, board ESP32 DevKit V1 (`esp32doit-devkit-v1`).
-Baca sensor tiap 10 detik, rata-rata per menit, kirim ke server lewat **WebSocket (WSS)** `/ws/device`: heartbeat + nilai live tiap 10 detik, record menit dengan `ack`. ESP yang menyambung keluar, jadi boleh di belakang NAT/jaringan lain.
-Saat offline, record disimpan di flash (`/pending.ndjson`, LittleFS, maks 1 MB) lalu dikirim ulang 50 per pesan.
+Baca sensor tiap 1 detik untuk tampilan live (sampel 10 detik dipakai untuk rata-rata per menit), kirim ke server lewat **WebSocket (WSS)** `/ws/device`: nilai live tiap 1 detik, record menit dengan `ack`. ESP yang menyambung keluar, jadi boleh di belakang NAT/jaringan lain.
+Saat offline, record disimpan di flash (`/pending.ndjson`, LittleFS, maks 768 KB) lalu dikirim ulang 50 per pesan.
 
 ## Wiring
 
@@ -35,20 +35,26 @@ jadi DHT22/BH1750 bisa dicolok belakangan tanpa flash ulang. FC-37 (analog) sela
    pio run -t upload && pio device monitor
    ```
 
-## Kalibrasi FC-37 (TEST_MODE)
+## Kalibrasi FC-37
 
-```bash
-pio run -e test -t upload && pio device monitor
-```
-Tanpa WiFi, mencetak semua pembacaan dan status sensor tiap 2 detik. Catat `hujan_ao` saat pelat kering
-dan saat ditetesi air, pilih ambang di antaranya, isi `RAIN_WET_THRESHOLD` di `config.h`, lalu flash ulang mode normal.
+Serial (`pio device monitor`) mencetak semua pembacaan sensor tiap 10 detik, termasuk `hujan_ao` dan status KERING/BASAH.
+Catat `hujan_ao` saat pelat kering dan saat ditetesi air, pilih ambang di antaranya, isi `RAIN_WET_THRESHOLD` di `config.h`, lalu flash ulang.
 
 ## Perilaku
 
-- Sampel tiap 10 detik (selaras detik 0,10,…,50 saat jam valid). Rata-rata per menit dari sampel valid; field tanpa sampel valid → `null`.
+- Sensor dibaca tiap 1 detik (DHT22 hanya menghasilkan nilai baru tiap 2 detik). Hanya sampel pada detik 0,10,…,50 (selaras detik 0,10,…,50 saat jam valid). Rata-rata per menit dari sampel valid; field tanpa sampel valid → `null`.
 - `rain_wet_seconds` = jumlah sampel basah × 10. Event hujan `start`/`stop` setelah 3 sampel berturut-turut konsisten (30 detik).
 - Waktu dari NTP (`pool.ntp.org`, `id.pool.ntp.org`) saat boot dan tiap 6 jam, UTC. Sebelum jam valid (tahun < 2025) tidak ada record yang dibuat; status tetap dikirim.
 - Satu koneksi WebSocket tetap terbuka (ping 15 detik, sambung ulang tiap 5 detik). Pesan pertama `hello` (device_id + token); token salah → server menutup (4401) dan Serial mencetak peringatan.
-- Tiap 10 detik satu pesan berisi status (RSSI, uptime, heap, backlog, `buffer_full`, sensor terhubung), `live` (sampel terakhir untuk dashboard realtime) dan record baru.
+- Tiap 1 detik satu pesan berisi status (RSSI, uptime, heap, backlog, `buffer_full`, sensor terhubung), `live` (sampel terakhir untuk dashboard realtime) dan record baru.
   Batch record ber-`id`; tersimpan setelah server membalas `ack`. Putus atau ack tidak datang dalam 10 detik → record ke flash dan sambung ulang. `nack` permanen → batch dibuang (dicatat di Serial).
 - Watchdog 30 detik, WiFi reconnect dengan jeda 5 → 60 detik. Serial 115200.
+
+## Pembaruan firmware (OTA)
+
+ESP32 tidak membuka port; ia menarik firmware dari web yang sama dengan WebSocket.
+1. Naikkan `FW_VERSION` di `include/config.h`, lalu `pio run`.
+2. Buka `/pengaturan` di dashboard, login admin, unggah `.pio/build/esp32doit-devkit-v1/firmware.bin` dengan versi yang sama.
+3. Tekan "Kirim ke perangkat" (perangkat harus online). ESP32 mengunduh, memeriksa MD5, restart; versi baru tampil di halaman Perangkat.
+
+Catatan: tabel partisi sudah diganti ke `partitions_ota.csv` (2 slot app), jadi **flash pertama setelah perubahan ini harus lewat USB** (`pio run -t upload`; buffer offline di flash ikut terhapus). Tanpa rollback otomatis; firmware yang rusak dipulihkan lewat USB.

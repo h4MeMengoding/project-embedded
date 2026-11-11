@@ -11,7 +11,7 @@ constexpr uint8_t PIN_RAIN_PWR = 25;  // FC-37 hanya diberi daya saat dibaca (ku
 // Nilai NAN = sensor tidak terhubung / pembacaan gagal.
 struct Sample {
   float tDht, hDht, tBmp, pHpa, lux;
-  int rainAo;
+  float rainAo;  // NAN = FC-37 tidak terbaca (AO mengambang/terlepas)
   bool wet;
 };
 

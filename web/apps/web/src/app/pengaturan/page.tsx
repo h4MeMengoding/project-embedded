@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { getSetting } from '@ws/db';
+import { getDeviceStatus, getSetting, listFirmware } from '@ws/db';
 import { formatWib } from '@ws/core';
 import { getDb } from '@/lib/db';
 import { getEnv } from '@/lib/env';
@@ -9,6 +9,7 @@ import { HeroBand, PageShell } from '@/components/PageShell';
 import { Card } from '@/components/Card';
 import { LoginForm, LogoutButton } from '@/components/settings/LoginForm';
 import { RegionPicker } from '@/components/settings/RegionPicker';
+import { FirmwareCard } from '@/components/settings/FirmwareCard';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Pengaturan · Stasiun Cuaca' };
@@ -20,6 +21,9 @@ export default async function Pengaturan() {
   const admin = isAdmin((await cookies()).get(ADMIN_COOKIE)?.value, pw);
   const [adm4, location] = await Promise.all([getSetting(db, 'bmkg_adm4'), getSetting(db, 'bmkg_location')]);
   const locked = isRegionLocked(env.evalStart, new Date());
+  const [images, device] = admin
+    ? await Promise.all([listFirmware(db), getDeviceStatus(db, env.deviceId, env.offlineAfterSec, new Date())])
+    : [[], null];
   const activeCode = adm4 ?? (env.adm4 !== 'SEED' ? env.adm4 : null);
 
   return (
@@ -56,6 +60,16 @@ export default async function Pengaturan() {
             )}
             <p className="mt-6 text-xs text-[var(--muted)]">Sumber: BMKG. Daftar wilayah: kode Kemendagri via wilayah.id.</p>
           </Card>
+          {admin && device && (
+            <Card tone="light" title="Pembaruan firmware (OTA)" subtitle="Unggah firmware.bin, lalu kirim ke ESP32 yang sedang online">
+              <FirmwareCard
+                items={images.map((i) => ({ id: i.id, version: i.version, sizeKb: Math.round(i.size / 1024), md5: i.md5, uploadedAt: formatWib(i.uploadedAt, 'datetime') + ' WIB' }))}
+                online={device.online}
+                fwVersion={device.fwVersion}
+                ip={device.ip}
+              />
+            </Card>
+          )}
         </div>
         <div className="stamp">Halaman lain tetap publik dan hanya baca</div>
       </PageShell>

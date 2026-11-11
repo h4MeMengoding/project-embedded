@@ -7,3 +7,4 @@ export * from './settings';
 export * from './predictions';
 export * from './ingest';
 export * from './bmkgStore';
+export * from './firmware';

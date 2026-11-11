@@ -27,7 +27,7 @@ export async function ingestPayload(db: Db, deviceId: string, p: IngestPayload, 
     }))).onConflictDoNothing().returning({ id: rainEvents.id });
     await tx.update(devices).set({
       lastSeenAt: now, lastRssi: s.rssi, fwVersion: p.fw, lastUptimeS: s.uptime_s, lastHeapFree: s.heap_free,
-      lastBacklog: s.backlog, lastBufferFull: s.buffer_full, lastSensors: s.sensors,
+      lastBacklog: s.backlog, lastBufferFull: s.buffer_full, lastSensors: s.sensors, lastIp: s.ip,
     }).where(eq(devices.id, deviceId));
     return { ts: m.map((r) => r.ts), stored: m.length + e.length };
   });

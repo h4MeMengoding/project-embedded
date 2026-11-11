@@ -18,17 +18,9 @@
 #define DEVICE_TOKEN "isi-token-dari-device-create"
 
 // ---- Sensor ----
-// Nilai ADC FC-37 (0-4095): BASAH jika AO < ambang. Kalibrasi dengan TEST_MODE=1:
-// catat AO saat kering dan saat ditetesi air, ambil nilai di antaranya.
+// Nilai ADC FC-37 (0-4095): BASAH jika AO < ambang. Kalibrasi: lihat `hujan_ao` di Serial
+// saat kering dan saat ditetesi air, ambil nilai di antaranya.
 #define RAIN_WET_THRESHOLD 2500
-
-#define FW_VERSION "1.0.0"
-
-// 1 = hanya cetak pembacaan sensor ke Serial tiap 2 detik, tanpa WiFi (uji wiring & kalibrasi).
-// Bisa juga lewat build flag: -DTEST_MODE=1
-#ifndef TEST_MODE
-#define TEST_MODE 0
-#endif
 
 // Root CA untuk WSS. Default: ISRG Root X1 (Let's Encrypt, dipakai Caddy), berlaku s.d. 2035-06-04.
 // SHA-256: 96:BC:EC:06:26:49:76:F3:74:60:77:9A:CF:28:C5:A7:CF:E8:A3:C0:AA:E1:1A:8F:FC:EE:05:C0:BD:DF:08:C6

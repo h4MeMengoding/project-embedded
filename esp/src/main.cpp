@@ -1,4 +1,4 @@
-// Stasiun cuaca ESP32: baca sensor tiap 10 detik, agregat per menit, kirim lewat WebSocket (WSS).
+// Stasiun cuaca ESP32: baca sensor tiap 1 detik (live), agregat per menit dari sampel 10 detik, kirim lewat WebSocket (WSS).
 // Spesifikasi: CLAUDE.md Bagian 4 dan web/docs/superpowers/specs/2026-11-09-esp-ingest-bmkg-design.md.
 #include <Arduino.h>
 #include <WiFi.h>
@@ -9,14 +9,17 @@
 #include "config.h"
 #include "sensors.h"
 #include "uploader.h"
+#include "ota.h"
+#include "version.h"
 
 static const time_t TIME_VALID_FROM = 1735689600;  // 2025-01-01 UTC; sebelum ini jam belum tersinkron
-static const uint32_t SAMPLE_MS = 10000;
+static const uint32_t SAMPLE_MS = 10000;  // sampel agregasi menit (data penelitian)
+static const uint32_t LIVE_MS = 1000;     // nilai live ke dashboard: baca dan kirim tiap 1 detik
 
-[[maybe_unused]] static bool timeValid() { return time(nullptr) >= TIME_VALID_FROM; }
+static bool timeValid() { return time(nullptr) >= TIME_VALID_FROM; }
 
 // ---------- Watchdog 30 detik ----------
-[[maybe_unused]] static void setupWatchdog() {
+static void setupWatchdog() {
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
   esp_task_wdt_config_t c = {.timeout_ms = 30000, .idle_core_mask = 1, .trigger_panic = true};
   if (esp_task_wdt_reconfigure(&c) != ESP_OK) esp_task_wdt_init(&c);
@@ -26,27 +29,6 @@ static const uint32_t SAMPLE_MS = 10000;
   esp_task_wdt_add(NULL);
 }
 
-#if TEST_MODE
-// ---------- TEST_MODE: uji wiring & kalibrasi FC-37, tanpa WiFi ----------
-void setup() {
-  Serial.begin(115200);
-  delay(500);
-  Serial.println("\n=== TEST_MODE: cetak sensor tiap 2 detik, tanpa WiFi ===");
-  sensorsBegin();
-}
-
-void loop() {
-  static uint32_t lastRetry = 0;
-  if (millis() - lastRetry >= 10000) { lastRetry = millis(); sensorsRetry(); }
-  Sample s = sensorsRead();
-  SensorFlags f = sensorsFlags();
-  Serial.printf("[%s %s %s %s] ", f.dht22 ? "DHT22" : "dht22?", f.bmp280 ? "BMP280" : "bmp280?",
-                f.bh1750 ? "BH1750" : "bh1750?", f.rain ? "FC-37" : "fc37?");
-  sensorsPrint(s);
-  delay(2000);
-}
-
-#else
 // ---------- Mode normal ----------
 
 // Agregat satu menit (hanya sampel valid per field).
@@ -131,19 +113,24 @@ static bool handleSample(const Sample& s) {
   return closed;
 }
 
-static Sample lastSample;
+static Sample lastSample;  // untuk "live"; DHT22 yang gagal sesaat diganti nilai valid terakhirnya agar tampilan tidak berkedip
 static bool haveSample = false;
+static float lastDhtT = NAN, lastDhtH = NAN;
 
 static void putNum(JsonObject o, const char* k, float v, int decimals) {
   if (isnan(v)) o[k] = nullptr;
   else { double p = pow(10, decimals); o[k] = round(v * p) / p; }
 }
 
+// Penanda versi di dalam binary: server membacanya dari firmware.bin saat diunggah (OTA). Dipakai di setup() agar tidak dibuang linker.
+static const char FW_TAG[] = "FWVER:" FW_VERSION;
+
 static void fillStatus(JsonObject root) {
   JsonObject st = root["status"].to<JsonObject>();
   if (timeValid()) st["ts"] = (long long)time(nullptr);
   else st["ts"] = nullptr;
   st["rssi"] = WiFi.RSSI();
+  st["ip"] = WiFi.localIP().toString();
   st["uptime_s"] = millis() / 1000;
   st["heap_free"] = ESP.getFreeHeap();
   st["backlog"] = uploaderBacklog();
@@ -164,7 +151,7 @@ static void fillStatus(JsonObject root) {
   putNum(lv, "temp_bmp", lastSample.tBmp, 2);
   putNum(lv, "pressure_hpa", lastSample.pHpa, 2);
   putNum(lv, "lux", lastSample.lux, 1);
-  lv["rain_analog"] = lastSample.rainAo;
+  putNum(lv, "rain_analog", lastSample.rainAo, 0);
   lv["rain_wet"] = lastSample.wet;
 }
 
@@ -191,7 +178,7 @@ static void maintainWifi() {
 void setup() {
   Serial.begin(115200);
   delay(500);
-  Serial.printf("\n=== Stasiun cuaca %s, firmware %s ===\n", DEVICE_ID, FW_VERSION);
+  Serial.printf("\n=== Stasiun cuaca %s | firmware %s ===\n", DEVICE_ID, FW_TAG + 6);
   setupWatchdog();
   sensorsBegin();
   uploaderBegin(fillStatus);
@@ -207,7 +194,7 @@ void loop() {
   esp_task_wdt_reset();
   maintainWifi();
 
-  static uint32_t lastSampleMs = 0, lastRetryMs = 0;
+  static uint32_t lastSampleMs = 0, lastLiveMs = 0, lastRetryMs = 0;
   static long lastSlot = -1;
   static bool wasValid = false;
 
@@ -217,23 +204,30 @@ void loop() {
     Serial.println(valid ? "[waktu] tersinkron NTP" : "[waktu] belum valid: record tidak dibuat");
     wasValid = valid;
   }
-  bool due = valid ? (time(nullptr) / 10 != lastSlot) : (millis() - lastSampleMs >= SAMPLE_MS);
+  bool aggDue = valid ? (time(nullptr) / 10 != lastSlot) : (millis() - lastSampleMs >= SAMPLE_MS);
+  bool liveDue = millis() - lastLiveMs >= LIVE_MS;
   bool sendNow = false;
-  if (due) {
-    lastSlot = time(nullptr) / 10;
-    lastSampleMs = millis();
+  if (aggDue || liveDue) {
+    lastLiveMs = millis();
     Sample s = sensorsRead();
-    sensorsPrint(s);
-    lastSample = s;
+    if (aggDue) {  // hanya sampel 10 detik yang masuk agregat menit, event hujan, dan log Serial
+      lastSlot = time(nullptr) / 10;
+      lastSampleMs = millis();
+      sensorsPrint(s);
+      handleSample(s);
+    }
+    Sample live = s;
+    if (!isnan(s.tDht)) { lastDhtT = s.tDht; lastDhtH = s.hDht; }
+    else if (sensorsFlags().dht22) { live.tDht = lastDhtT; live.hDht = lastDhtH; }
+    lastSample = live;
     haveSample = true;
-    handleSample(s);
-    sendNow = true;  // heartbeat tiap sampel: status + live + record baru
+    sendNow = true;  // tiap detik: status + live (+ record baru jika ada)
   }
   if (millis() - lastRetryMs >= 60000) {
     lastRetryMs = millis();
     sensorsRetry();
   }
   uploaderTick(sendNow);
+  if (otaDue()) otaRun();
   delay(50);
 }
-#endif

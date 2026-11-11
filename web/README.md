@@ -54,7 +54,7 @@ Halaman: `/` Beranda, `/riwayat`, `/evaluasi`, `/fuzzy`, `/perangkat`, `/pengatu
 ## Catatan
 
 - Wilayah BMKG disetel di `/pengaturan` (login `ADMIN_PASSWORD`), dicek ke BMKG sebelum disimpan, terkunci setelah `EVAL_START`. `BMKG_ADM4` di env hanya cadangan; kosong berarti `SEED`.
-- Realtime: ESP membuka WebSocket `/ws/device` ke server dan mengirim heartbeat tiap 10 detik; browser menerima lewat WebSocket `/ws/live` (data baru tanpa refresh, offline terdeteksi setelah `DEVICE_OFFLINE_AFTER_SEC`, default 30 dtk).
+- Realtime: ESP membuka WebSocket `/ws/device` ke server dan mengirim nilai live tiap 1 detik; browser menerima lewat WebSocket `/ws/live` (data baru tanpa refresh, offline terdeteksi setelah `DEVICE_OFFLINE_AFTER_SEC`, default 30 dtk).
 - Cron di proses web (`src/instrumentation.ts`): ambil BMKG menit ke-5 tiap jam (dan saat start), hitung ulang evaluasi menit ke-10. `DISABLE_JOBS=1` mematikannya.
 
 ## Perangkat ESP32
@@ -64,7 +64,7 @@ npm run db:migrate -w @ws/db                  # sekali, menambah kolom devices.l
 npm run device:create                         # pakai DEVICE_ID dari .env.local; cetak baris siap-salin untuk config.h
 ```
 
-ESP32 menyambung ke `wss://domain/ws/device`, mengirim `hello` (device_id + token), lalu heartbeat tiap 10 detik dan record per menit yang dibalas `ack`. Protokol lengkap: `../CLAUDE.md` Bagian 5. Lihat `../esp/README.md`.
+ESP32 menyambung ke `wss://domain/ws/device`, mengirim `hello` (device_id + token), lalu nilai live tiap 1 detik dan record per menit yang dibalas `ack`. Protokol lengkap: `../CLAUDE.md` Bagian 5. Lihat `../esp/README.md`.
 Uji tanpa hardware (Node 24 punya `WebSocket` bawaan; ganti `<token>`, dan `ts` = awal menit UTC terbaru):
 
 ```bash

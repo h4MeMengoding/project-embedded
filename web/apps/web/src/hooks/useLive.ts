@@ -4,7 +4,7 @@ import { reviveLive, type LiveData } from '../lib/liveTypes';
 import { subscribeLive } from '../lib/liveStream';
 
 /**
- * Data terbaru tanpa refresh: WebSocket /ws/live (live tiap ~10 dtk, offline setelah heartbeat berhenti),
+ * Data terbaru tanpa refresh: WebSocket /ws/live (live tiap ~1 dtk, offline setelah heartbeat berhenti),
  * ditambah ambil ulang /api/live saat tersambung, saat menit baru masuk, dan tiap 60 dtk sebagai cadangan.
  */
 export function useLive(initial: LiveData): LiveData {

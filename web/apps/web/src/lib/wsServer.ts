@@ -4,6 +4,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 import { parseIngestPayload, type IngestPayload } from '@ws/core';
 import { lastLive, publish, publishLive, subscribe } from './liveHub';
 import { createRateLimiter } from './rateLimit';
+import { setDeviceSender } from './deviceLink';
 
 // WebSocket di proses web yang sama dengan Next.js (lihat server.ts).
 //   /ws/device  ESP32 → server. Pesan pertama `hello` (device_id + token), sesudahnya payload ingest:
@@ -23,14 +24,17 @@ const MAX_PAYLOAD = 64 * 1024;
 const HELLO_TIMEOUT_MS = 5000;
 const PING_MS = 15_000;
 
-// Per IP sebelum autentikasi; per perangkat sesudahnya (heartbeat 6/menit + backfill ≤ 20/menit).
+// Per IP sebelum autentikasi; per perangkat sesudahnya (live 60/menit + backfill ≤ 60/menit + record).
 const limitIp = createRateLimiter({ windowMs: 60_000, max: 60 });
-const limitDevice = createRateLimiter({ windowMs: 60_000, max: 120 });
+const limitDevice = createRateLimiter({ windowMs: 60_000, max: 300 });
+// Pesan tanpa record datang tiap ~1 detik; status perangkat di DB cukup diperbarui tiap 10 detik.
+const STATUS_DB_MS = 10_000;
 
 const send = (ws: WebSocket, m: unknown) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(m)); };
 
 function onDevice(ws: WebSocket, deps: WsDeps, sockets: Map<string, WebSocket>) {
   let dev: string | null = null;
+  let lastIngestMs = 0;
   const helloTimer = setTimeout(() => ws.close(4401, 'hello timeout'), HELLO_TIMEOUT_MS);
 
   async function handle(raw: string) {
@@ -60,10 +64,12 @@ function onDevice(ws: WebSocket, deps: WsDeps, sockets: Map<string, WebSocket>) 
     const p = parsed.value;
     if (p.device_id !== dev) return nack('device_id berbeda dari hello', true);
 
-    let r: { stored: number; duplicates: number };
-    try { r = await deps.ingest(p, new Date(nowMs)); } catch (e) {
-      console.error('[ws] ingest gagal:', e instanceof Error ? e.message : e);
-      return nack('server gagal menyimpan', false);
+    let r = { stored: 0, duplicates: 0 };
+    if (p.records.length > 0 || nowMs - lastIngestMs >= STATUS_DB_MS) {
+      try { r = await deps.ingest(p, new Date(nowMs)); lastIngestMs = nowMs; } catch (e) {
+        console.error('[ws] ingest gagal:', e instanceof Error ? e.message : e);
+        return nack('server gagal menyimpan', false);
+      }
     }
 
     const l = p.live;
@@ -104,6 +110,12 @@ export function attachWebSockets(server: Server, deps: WsDeps, fallback?: Fallba
   const live = new WebSocketServer({ noServer: true, maxPayload: 1024 });
   const sockets = new Map<string, WebSocket>();
   device.on('connection', (ws) => onDevice(ws, deps, sockets));
+  setDeviceSender((id, msg) => {
+    const ws = sockets.get(id);
+    if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+    send(ws, msg);
+    return true;
+  });
   live.on('connection', (ws) => onLive(ws, deps));
 
   const alive = new WeakSet<WebSocket>();
@@ -128,5 +140,5 @@ export function attachWebSockets(server: Server, deps: WsDeps, fallback?: Fallba
     else socket.destroy();
   });
 
-  return { close: () => { clearInterval(pinger); for (const ws of [...device.clients, ...live.clients]) ws.terminate(); device.close(); live.close(); } };
+  return { close: () => { clearInterval(pinger); setDeviceSender(undefined); for (const ws of [...device.clients, ...live.clients]) ws.terminate(); device.close(); live.close(); } };
 }
