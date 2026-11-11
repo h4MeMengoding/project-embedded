@@ -1,0 +1,5 @@
+# HTTPS otomatis (Let's Encrypt). reverse_proxy meneruskan upgrade WebSocket (/ws/device, /ws/live) tanpa konfigurasi tambahan.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy web:3000
+}
