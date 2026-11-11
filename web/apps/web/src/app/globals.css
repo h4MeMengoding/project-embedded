@@ -28,7 +28,7 @@
   --color-card: var(--card);
   --color-accent: var(--accent);
   --color-ok: var(--ok);
-  --font-sans: var(--font-jakarta), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: 'Plus Jakarta Sans Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 body {
   min-height: 100vh;
