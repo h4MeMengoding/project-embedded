@@ -31,7 +31,7 @@ static bool beginBmp() {
   return true;
 }
 
-static bool beginBh() { return bh.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, 0x23, &Wire); }
+static bool beginBh() { return bh.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, 0x23, &Wire1); }
 
 static const char* st(bool ok) { return ok ? "terhubung" : "belum terhubung"; }
 
@@ -40,6 +40,7 @@ void sensorsBegin() {
   digitalWrite(PIN_RAIN_PWR, LOW);
   analogSetPinAttenuation(PIN_RAIN_AO, ADC_11db);
   Wire.begin(PIN_SDA, PIN_SCL);
+  Wire1.begin(PIN_LUX_SDA, PIN_LUX_SCL, LUX_I2C_HZ);
   dht.begin();
   flags.bmp280 = beginBmp();
   flags.bh1750 = beginBh();

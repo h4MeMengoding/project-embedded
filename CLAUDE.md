@@ -100,7 +100,7 @@ Teknologi: TypeScript di semua bagian Node, **Drizzle ORM**, **vitest**, **Tailw
 | Komponen | Pin modul | Pin ESP32 | Catatan |
 |---|---|---|---|
 | BMP280 | SDA / SCL | GPIO 21 / GPIO 22 | I2C, alamat 0x76 (coba 0x77 jika gagal), VCC 3.3V |
-| BH1750 (GY-302) | SDA / SCL | GPIO 21 / GPIO 22 | I2C, ADDR ke GND → alamat 0x23, VCC 3.3V |
+| BH1750 (GY-302) | SDA / SCL | GPIO 32 / GPIO 33 | Bus I2C kedua (`Wire1`, 10 kHz) agar kabel panjang (±5 m) tidak mengganggu BMP280. ADDR ke GND → 0x23, VCC 3.3V. Kabel LAN: SDA dan SCL masing-masing dipilin dengan GND, jangan SDA dengan SCL |
 | DHT22 | DATA | GPIO 4 | Butuh pull-up 10 kΩ (modul biasanya sudah ada) |
 | FC-37 | AO | GPIO 34 | **Wajib ADC1** (ADC2 tidak bisa dipakai saat WiFi aktif) |
 | FC-37 | VCC | GPIO 25 | Sensor hanya diberi daya saat dibaca untuk mengurangi korosi pelat |
