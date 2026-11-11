@@ -21,6 +21,10 @@ docker compose pull && docker compose up -d
 ```
 Rollback: set `WEB_TAG=sha-<commit lama>` di `.env`, lalu perintah yang sama.
 
+Auto deploy: push ke `main` otomatis redeploy ke VPS lewat job `deploy` di workflow (SSH dengan kunci terbatas yang hanya bisa
+menjalankan `/root/project-embedded/deploy.sh <tag>`; rollback otomatis jika container tidak sehat).
+Update manual tetap bisa: `./deploy.sh sha-<commit>` di VPS.
+
 ### Catatan
 - Jalankan **satu** instance `web`: cron BMKG/evaluasi dan hub WebSocket ada di memori proses.
 - Image hanya `linux/amd64`. VPS ARM butuh `platforms: linux/amd64,linux/arm64` di workflow.
