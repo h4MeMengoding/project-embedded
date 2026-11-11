@@ -8,7 +8,7 @@ export function Card({ tone = 'light', title, subtitle, children, className = ''
   className?: string;
 }) {
   return (
-    <section className={`card ${tone} ${className}`} data-aos="fade-up">
+    <section className={`card ${tone} ${className}`}>
       <h3>{title}</h3>
       {subtitle && <div className="sub">{subtitle}</div>}
       {children}

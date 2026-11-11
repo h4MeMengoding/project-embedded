@@ -16,7 +16,7 @@ export function RangePicker({ preset, basePath = '/riwayat', showPresets = true,
   const valid = Boolean(from && to && from < to);
   const href = valid ? `${basePath}?from=${encodeURIComponent(wib(from))}&to=${encodeURIComponent(wib(to))}` : null;
   return (
-    <div className="filter" data-aos="fade-up">
+    <div className="filter">
       {showPresets && (
         <>
           <div>

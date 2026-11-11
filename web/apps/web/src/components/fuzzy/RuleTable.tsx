@@ -2,7 +2,7 @@ import { ACTIVE_FUZZY_CONFIG } from '@ws/core';
 
 export function RuleTable() {
   return (
-    <div className="card light" data-aos="fade-up" style={{ overflowX: 'auto' }}>
+    <div className="card light" style={{ overflowX: 'auto' }}>
       <h3>27 aturan (config {ACTIVE_FUZZY_CONFIG.version})</h3>
       <table style={{ width: '100%', marginTop: 16, borderCollapse: 'collapse', minWidth: 480 }}>
         <thead>

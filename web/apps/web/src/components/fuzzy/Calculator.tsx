@@ -61,7 +61,7 @@ export function Calculator({ threshold = 50 }: { threshold?: number }) {
 
   const tempFilled = temp.trim() !== '';
   return (
-    <section className="card light" data-aos="fade-up">
+    <section className="card light">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3>Kalkulator Fuzzy Mamdani</h3>

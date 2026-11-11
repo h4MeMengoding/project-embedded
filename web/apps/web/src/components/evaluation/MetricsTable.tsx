@@ -23,7 +23,7 @@ export function MetricsTable({ fuzzy, bmkg, excluded }: { fuzzy: Metrics; bmkg: 
     ['Jumlah slot yang dievaluasi', String(fuzzy.n), String(bmkg.n)],
   ];
   return (
-    <section className="card light" data-aos="fade-up" style={{ overflowX: 'auto' }}>
+    <section className="card light" style={{ overflowX: 'auto' }}>
       <h3>Perbandingan metrik kinerja</h3>
       <table style={{ width: '100%', marginTop: 16, borderCollapse: 'collapse' }}>
         <thead><tr style={{ textAlign: 'left', fontSize: 13, color: 'var(--muted)' }}><th style={{ padding: 8 }}>Metrik</th><th>Fuzzy Mamdani</th><th>BMKG (Sumber: BMKG)</th></tr></thead>

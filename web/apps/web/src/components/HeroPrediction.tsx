@@ -19,7 +19,7 @@ export function HeroPrediction({ state, predictionTs, sensors }: { state: HomeSt
     : '3 jam ke depan';
   return (
     <div className="hero">
-      <div className={`hero-main${state.kind === 'offline' ? ' stale' : ''}`} data-aos="fade-up">
+      <div className={`hero-main${state.kind === 'offline' ? ' stale' : ''}`}>
         <RingGauge percent={state.percent} label={state.kind === 'offline' ? 'data tidak terkini' : undefined} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div className="eyebrow">{range}</div>

@@ -20,7 +20,7 @@ export function MembershipChart({ title, unit, universe, sets }: {
     return { x, ...Object.fromEntries(fns.map(([k, f]) => [k, f(x)])) };
   });
   return (
-    <figure className="card light" data-aos="fade-up" style={{ margin: 0 }}>
+    <figure className="card light" style={{ margin: 0 }}>
       <h3>{title}</h3>
       <div className="sub">Derajat keanggotaan terhadap {unit}</div>
       <div style={{ height: 260, marginTop: 16 }} role="img" aria-label={`Grafik fungsi keanggotaan ${title}`}>

@@ -2,7 +2,7 @@ import { BMKG_MAPPING_TABLE } from '@ws/core';
 
 export function Assumptions({ minWet, threshold, slotMode }: { minWet: number; threshold: number; slotMode: 'start' | 'center' }) {
   return (
-    <section className="card light" data-aos="fade-up">
+    <section className="card light">
       <h3>Definisi dan asumsi evaluasi</h3>
       <ul style={{ marginTop: 12, lineHeight: 1.8 }}>
         <li>Menit basah didefinisikan sebagai menit dengan durasi basah sensor hujan ≥ 30 detik. Slot dinyatakan hujan aktual apabila jumlah menit basah ≥ {minWet}.</li>

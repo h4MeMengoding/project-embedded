@@ -8,7 +8,7 @@ export function ConfusionMatrix({ title, cm }: { title: string; cm: Confusion })
     </td>
   );
   return (
-    <section className="card light" data-aos="fade-up">
+    <section className="card light">
       <h3>Confusion matrix · {title}</h3>
       <div className="sub">Baris: kondisi aktual; kolom: hasil prediksi</div>
       <table style={{ width: '100%', marginTop: 16, borderSpacing: 8, borderCollapse: 'separate' }}>

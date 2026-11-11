@@ -17,7 +17,7 @@ export function SensorStrip({ state }: { state: HomeState }) {
   const stale = state.kind === 'offline';
   return (
     <>
-      <div className={`stats${stale ? ' stale' : ''}`} data-aos="fade-up">
+      <div className={`stats${stale ? ' stale' : ''}`}>
         {items.map(([l, v, u, sub]) => (
           <div className="stat" key={l}>
             <div className="l"><b />{l}</div>

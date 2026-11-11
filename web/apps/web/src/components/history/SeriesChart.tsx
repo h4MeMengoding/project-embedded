@@ -43,7 +43,7 @@ export function SeriesChart({ title, unit, data, series, rainIntervals, from, to
   const domain = yDomain ?? axis?.domain ?? (['auto', 'auto'] as const);
   const yt = yTicks ?? axis?.ticks;
   return (
-    <section className="card light" data-aos="fade-up">
+    <section className="card light">
       <h3>{title}</h3>
       <div className="sub">{unit} · area biru menandai periode hujan{refLines.length ? ' · garis putus-putus menandai ambang' : ''}</div>
       {!hasData ? (

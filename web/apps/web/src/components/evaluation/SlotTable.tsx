@@ -21,7 +21,7 @@ export function SlotTable({ slots }: { slots: Row[] }) {
   const [onlyWrong, setOnlyWrong] = useState(false);
   const shown = onlyWrong ? slots.filter((s) => s.fuzzyCorrect === false || s.bmkgCorrect === false) : slots;
   return (
-    <section className="card light" data-aos="fade-up" style={{ overflowX: 'auto' }}>
+    <section className="card light" style={{ overflowX: 'auto' }}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3>Hasil evaluasi per slot 3 jam</h3>
         <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold">
