@@ -32,7 +32,7 @@ export default async function Evaluasi({ searchParams }: { searchParams: Promise
   const hasFrom = Boolean(sp.from || env.evalStart);
   const hasTo = Boolean(sp.to || env.evalEnd);
   const summary = hasFrom || hasTo
-    ? `${hasFrom ? formatWib(from, 'datetime') : 'awal data'} – ${hasTo ? formatWib(to, 'datetime') : 'sekarang'} WIB`
+    ? `${hasFrom ? formatWib(from, 'datetime') : 'awal data'} – ${hasTo ? formatWib(to, 'datetime') : 'sekarang'}`
     : 'Semua data';
   const q = `from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`;
   return (

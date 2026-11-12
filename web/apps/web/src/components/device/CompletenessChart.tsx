@@ -4,7 +4,7 @@ type C = { perDay: { dayWib: string; records: number; expected: number; pct: num
 
 export function CompletenessChart({ c }: { c: C }) {
   return (
-    <Card tone="light" title="Kelengkapan data" subtitle="Per hari (WIB), 1 record per menit">
+    <Card tone="light" title="Kelengkapan data" subtitle="Per hari, 1 record per menit">
       <p style={{ fontSize: 40, fontWeight: 700, marginTop: 12 }}>{c.total.pct.toFixed(1).replace('.', ',')}%<small style={{ fontSize: 15, fontWeight: 500, marginLeft: 8 }}>{c.total.records} dari {c.total.expected} menit</small></p>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 140, marginTop: 12 }} role="img" aria-label="Kelengkapan data per hari">
         {c.perDay.map((d) => (

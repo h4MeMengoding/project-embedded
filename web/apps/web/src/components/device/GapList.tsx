@@ -7,7 +7,7 @@ export function GapList({ gaps }: { gaps: { start: Date; end: Date; minutes: num
       {gaps.length === 0 ? <p style={{ marginTop: 16 }}>Tidak terdapat celah data pada rentang ini.</p> : (
         <ul style={{ marginTop: 12 }}>
           {gaps.map((g) => (
-            <li key={g.start.getTime()} className="li"><div><b>{formatWib(g.start, 'datetime')} → {formatWib(g.end, 'datetime')}</b><small>WIB</small></div><span className="chip">{g.minutes} menit</span></li>
+            <li key={g.start.getTime()} className="li"><div><b>{formatWib(g.start, 'datetime')} → {formatWib(g.end, 'datetime')}</b></div><span className="chip">{g.minutes} menit</span></li>
           ))}
         </ul>
       )}

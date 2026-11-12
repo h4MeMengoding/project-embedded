@@ -8,7 +8,7 @@ const dur = (s: number | null) => (s == null ? '—' : `${Math.floor(s / 3600)} 
 export function DeviceStatusCard({ s, deviceId }: { s: DeviceStatus; deviceId: string }) {
   const rows: [string, string][] = [
     ['Status', s.online ? 'Online' : 'Offline'],
-    ['Terakhir terlihat', s.lastSeenAt ? `${formatWib(s.lastSeenAt, 'datetime')} WIB` : 'Belum pernah terlihat'],
+    ['Terakhir terlihat', s.lastSeenAt ? formatWib(s.lastSeenAt, 'datetime') : 'Belum pernah terlihat'],
     ['RSSI', s.rssi == null ? '—' : `${s.rssi} dBm`],
     ['Uptime', dur(s.uptimeS)],
     ['Sisa heap', s.heapFree == null ? '—' : `${(s.heapFree / 1024).toFixed(0)} KB`],

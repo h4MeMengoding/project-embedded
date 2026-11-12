@@ -64,7 +64,7 @@ export default async function Home() {
           <BmkgCard slots={slots} mode={env.slotMode} />
           <RainActivityCard intervals={intervals} now={now} />
         </div>
-        <div className="stamp">{seen ? `Data terakhir diterima ${formatWib(seen, 'time')} WIB` : ''}</div>
+        <div className="stamp">{seen ? `Data terakhir diterima ${formatWib(seen, 'time')}` : ''}</div>
       </PageShell>
     </>
   );

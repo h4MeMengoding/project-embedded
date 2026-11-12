@@ -15,7 +15,7 @@ export function HeroPrediction({ state, predictionTs, sensors }: { state: HomeSt
     );
   }
   const range = predictionTs
-    ? `3 jam ke depan · ${formatWib(predictionTs, 'time')}–${formatWib(new Date(predictionTs.getTime() + 3 * 3600_000), 'time')} WIB`
+    ? `3 jam ke depan · ${formatWib(predictionTs, 'time')}–${formatWib(new Date(predictionTs.getTime() + 3 * 3600_000), 'time')}`
     : '3 jam ke depan';
   return (
     <div className="hero">
@@ -30,7 +30,7 @@ export function HeroPrediction({ state, predictionTs, sensors }: { state: HomeSt
           <div className="pills">
             {state.agreement && <Pill tone={state.agreementTone === 'bad' ? 'whitebad' : 'white'}>{state.agreement}</Pill>}
             <Pill tone="warn">{state.current}</Pill>
-            {state.kind !== 'offline' && <span className="pill-status"><Pill tone="ok">Perangkat online{state.lastSeenTime ? ` · ${state.lastSeenTime} WIB` : ''}</Pill></span>}
+            {state.kind !== 'offline' && <span className="pill-status"><Pill tone="ok">Perangkat online{state.lastSeenTime ? ` · ${state.lastSeenTime}` : ''}</Pill></span>}
             {state.kind === 'offline' && <span className="pill-status"><Pill tone="warn">Perangkat offline{state.lastSeenLabel ? ` · ${state.lastSeenLabel}` : ''}</Pill></span>}
           </div>
         </div>

@@ -29,11 +29,11 @@ export function RangePicker({ preset, basePath = '/riwayat', showPresets = true,
         </>
       )}
       <div>
-        <label className="filter-label" htmlFor="rp-from">Dari (WIB)</label>
+        <label className="filter-label" htmlFor="rp-from">Dari</label>
         <input id="rp-from" type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
       </div>
       <div>
-        <label className="filter-label" htmlFor="rp-to">Sampai (WIB)</label>
+        <label className="filter-label" htmlFor="rp-to">Sampai</label>
         <input id="rp-to" type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
       </div>
       {summary && <div style={{ alignSelf: 'center', fontSize: 13, fontWeight: 700, color: '#587062' }}>Periode: <span style={{ color: '#0f2a1b' }}>{summary}</span></div>}

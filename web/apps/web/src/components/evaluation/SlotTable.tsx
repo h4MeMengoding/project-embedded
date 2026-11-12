@@ -37,7 +37,7 @@ export function SlotTable({ slots }: { slots: Row[] }) {
         <table className="slot-table" style={{ width: '100%', marginTop: 16, borderCollapse: 'collapse', minWidth: 900, fontSize: 14 }}>
           <thead>
             <tr style={{ textAlign: 'left', fontSize: 13, color: 'var(--muted)' }}>
-              {['Slot (WIB)', 'Peluang fuzzy', 'Prediksi fuzzy', 'Prakiraan BMKG', 'Prediksi BMKG', 'Menit basah', 'Hujan aktual', 'Ketepatan fuzzy', 'Ketepatan BMKG'].map((h) => <th key={h} style={{ padding: 8 }}>{h}</th>)}
+              {['Slot', 'Peluang fuzzy', 'Prediksi fuzzy', 'Prakiraan BMKG', 'Prediksi BMKG', 'Menit basah', 'Hujan aktual', 'Ketepatan fuzzy', 'Ketepatan BMKG'].map((h) => <th key={h} style={{ padding: 8 }}>{h}</th>)}
             </tr>
           </thead>
           <tbody>

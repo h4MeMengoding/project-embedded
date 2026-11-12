@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LogoMark } from './LogoMark';
 import { LuActivity, LuChartColumn, LuCpu, LuHouse, LuListChecks, LuMenu, LuSettings } from 'react-icons/lu';
 
 const ITEMS = [
@@ -22,7 +23,7 @@ export function NavBar({ active }: { active: NavKey }) {
   return (
     <div className="nav-wrap">
       <nav className="nav" aria-label="Navigasi utama">
-        <div className="logo"><i />Stasiun Cuaca</div>
+        <div className="logo"><LogoMark />Stasiun Cuaca</div>
         <div className="sep" />
         <div className="nav-links">{links}</div>
         <div className="sp" />

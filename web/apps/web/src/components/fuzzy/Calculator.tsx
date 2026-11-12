@@ -87,7 +87,7 @@ export function Calculator({ threshold = 50 }: { threshold?: number }) {
           <div className="grid gap-3 rounded-2xl bg-[var(--page)] p-5">
             <div className="text-sm font-bold">Muat dari data historis</div>
             <label className="block">
-              <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-[var(--muted)]">Menit pengamatan (WIB)</span>
+              <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-[var(--muted)]">Menit pengamatan</span>
               <input type="datetime-local" className={INPUT.replace('pr-14', 'pr-3')} value={minute} onChange={(e) => setMinute(e.target.value)} />
             </label>
             <button type="button" onClick={loadMinute} disabled={!minute || busy} className="btn btn-dark w-full">{busy ? 'Memuat…' : 'Muat data'}</button>

@@ -14,7 +14,7 @@ export function BmkgCard({ slots, mode }: { slots: BmkgRow[]; mode: 'start' | 'c
           return (
             <div className="slot" key={s.id}>
               <div>
-                <div className="t">{formatWib(start, 'time')}–{formatWib(end, 'time')} WIB</div>
+                <div className="t">{formatWib(start, 'time')}–{formatWib(end, 'time')}</div>
                 <b>{s.weatherDesc ?? '—'}</b>
               </div>
               <span className={`tg ${rain ? '' : 'no'}`}>{rain ? 'Hujan' : 'Tidak'}</span>

@@ -61,6 +61,6 @@ export function deriveHomeState(i: HomeInput): HomeState {
       deltaP3h: predOk ? (prediction!.deltaP3h ?? null) : null,
     },
     lastSeenTime: seen ? formatWib(seen, 'time') : null,
-    lastSeenLabel: seen ? `Data terakhir ${formatWib(seen, 'time')} WIB` : null,
+    lastSeenLabel: seen ? `Data terakhir ${formatWib(seen, 'time')}` : null,
   };
 }

@@ -61,7 +61,7 @@ export function SeriesChart({ title, unit, data, series, rainIntervals, from, to
               {refLines.map((l) => (
                 <ReferenceLine key={l.label} y={l.y} stroke="#d99a00" strokeWidth={1.5} strokeDasharray="5 5" label={{ value: l.label, position: 'insideTopRight', fontSize: 12, fill: '#a87400' }} />
               ))}
-              <Tooltip labelFormatter={(t) => `${formatWib(new Date(Number(t)), 'datetime')} WIB`} formatter={(v) => (typeof v === 'number' ? nf(tipDigits ?? digits).format(v) : v)} />
+              <Tooltip labelFormatter={(t) => `${formatWib(new Date(Number(t)), 'datetime')}`} formatter={(v) => (typeof v === 'number' ? nf(tipDigits ?? digits).format(v) : v)} />
               {series.length > 1 && <Legend wrapperStyle={{ fontSize: 13 }} />}
               {series.map((s) => (
                 <Line key={s.key} name={s.label} dataKey={s.key} stroke={s.color} strokeWidth={2.5} dot={false} connectNulls={false} isAnimationActive={false} />
