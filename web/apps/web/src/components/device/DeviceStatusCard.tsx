@@ -5,7 +5,7 @@ import { Card } from '../Card';
 
 const dur = (s: number | null) => (s == null ? '—' : `${Math.floor(s / 3600)} j ${Math.floor((s % 3600) / 60)} m`);
 
-export function DeviceStatusCard({ s, deviceId }: { s: DeviceStatus; deviceId: string }) {
+export function DeviceStatusCard({ s }: { s: DeviceStatus }) {
   const rows: [string, string][] = [
     ['Status', s.online ? 'Online' : 'Offline'],
     ['Terakhir terlihat', s.lastSeenAt ? formatWib(s.lastSeenAt, 'datetime') : 'Belum pernah terlihat'],
@@ -17,7 +17,7 @@ export function DeviceStatusCard({ s, deviceId }: { s: DeviceStatus; deviceId: s
     ['Firmware', s.fwVersion ?? '—'],
   ];
   return (
-    <Card tone="light" title={`Perangkat ${deviceId}`}>
+    <Card tone="light" title="Status perangkat">
       <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '8px 24px', marginTop: 16 }}>
         {rows.map(([k, v]) => (<Fragment key={k}><dt style={{ color: 'var(--muted)' }}>{k}</dt><dd style={{ fontWeight: 700 }}>{v}</dd></Fragment>))}
       </dl>

@@ -37,7 +37,7 @@ export default async function Perangkat() {
       <PageShell>
         <div className="grid gap-7" style={{ marginTop: -90, position: 'relative', zIndex: 3 }}>
           <div className="grid grid-cols-1 gap-7 lg:grid-cols-2">
-            <DeviceStatusCard s={status} deviceId={env.deviceId} />
+            <DeviceStatusCard s={status} />
             <LatencyCard l={latency} backfill={backfill} />
           </div>
           <SensorTable latest={latest} history={series.readings} sensors={status.sensors} />
