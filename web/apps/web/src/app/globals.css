@@ -60,7 +60,7 @@ body {
 @media (min-width: 1024px) { .shell { width: var(--w); padding: 0 var(--pad); } }
 
 .nav { display: flex; align-items: center; gap: 36px; height: 48px; color: #d9ecd5; padding-top: 0; }
-.nav-wrap { padding-top: 28px; }
+.nav-wrap { padding-top: calc(28px + env(safe-area-inset-top)); }
 .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 20px; color: #fff; white-space: nowrap; }
 .logo svg { flex-shrink: 0; }
 .nav .sep { width: 1px; height: 24px; background: rgba(255, 255, 255, 0.22); }
