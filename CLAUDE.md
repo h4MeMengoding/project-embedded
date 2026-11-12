@@ -194,6 +194,7 @@ Sesudah `hello_ack`, perangkat mengirim pesan data (payload ingest). `id` (bilan
 - `{"type":"ack","id":42,"stored":2,"duplicates":0}`: semua record di pesan `id` tersimpan.
 - `{"type":"nack","id":42,"error":"...","permanent":true}`: payload tidak valid (`permanent: true`, dibuang) atau server gagal menyimpan (`permanent: false`, kirim ulang nanti).
 - `{"type":"ota","path":"/api/device/firmware/3","size":1400000,"md5":"<32 hex>"}`: perintah OTA (Bagian 4.6).
+- `{"type":"restart"}`: perintah restart dari `/pengaturan` (2026-11-12); ESP32 menyimpan antrean RAM ke flash lalu `ESP.restart()`.
 - `{"type":"error","error":"..."}`: autentikasi gagal. Penutupan karena terlalu sering: kode 1008 (maks 300 pesan/menit per perangkat; 60 koneksi/menit per IP sebelum autentikasi).
 
 **Deduplikasi di server** memakai kunci unik `(device_id, ts)` untuk minute dan `(device_id, ts, state)` untuk rain_event (`ON CONFLICT DO NOTHING`, tetap di-`ack`). Server mengirim ping WebSocket tiap 15 detik dan memutus koneksi yang tidak membalas.

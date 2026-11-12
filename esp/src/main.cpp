@@ -66,7 +66,6 @@ static void finalizeMinute() {
   d["samples"] = min(acc.samples, 6);
   String s;
   serializeJson(d, s);
-  Serial.printf("[menit] %s\n", s.c_str());
   uploaderEnqueue(s);
 }
 
@@ -77,7 +76,7 @@ static void rainEvent(bool wet, time_t ts) {
   d["state"] = wet ? "start" : "stop";
   String s;
   serializeJson(d, s);
-  Serial.printf("[hujan] %s\n", s.c_str());
+  Serial.printf("[hujan] %s\n", wet ? "MULAI (basah)" : "BERHENTI (kering)");
   uploaderEnqueue(s);
 }
 
@@ -155,22 +154,37 @@ static void fillStatus(JsonObject root) {
   lv["rain_wet"] = lastSample.wet;
 }
 
+static void wifiBegin() {
+  Serial.printf("[wifi] menyambung ke \"%s\"\n", WIFI_SSID);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+}
+
+// Alasan putus dicetak sekali per alasan (event ini terpanggil tiap percobaan gagal).
+static volatile int lastWifiReason = -1;
+static void onWifiEvent(arduino_event_t* e) {
+  if (e->event_id == ARDUINO_EVENT_WIFI_STA_GOT_IP) { lastWifiReason = -1; return; }
+  int r = e->event_info.wifi_sta_disconnected.reason;
+  if (r == lastWifiReason) return;
+  lastWifiReason = r;
+  Serial.printf("[wifi] gagal/putus, alasan %d (%s)\n", r, WiFi.disconnectReasonName((wifi_err_reason_t)r));
+}
+
 // WiFi reconnect dengan backoff 5 → 60 detik.
 static void maintainWifi() {
   static uint32_t lastTry = 0, backoff = 5000;
   static bool wasUp = false;
   bool up = WiFi.status() == WL_CONNECTED;
   if (up != wasUp) {
-    if (up) Serial.printf("[wifi] tersambung, IP %s, RSSI %d\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
-    else Serial.println("[wifi] terputus");
+    if (up) Serial.printf("[wifi] TERSAMBUNG \"%s\" | IP %s | RSSI %d dBm | kanal %d\n", WiFi.SSID().c_str(),
+                          WiFi.localIP().toString().c_str(), WiFi.RSSI(), WiFi.channel());
+    else Serial.println("[wifi] TERPUTUS");
     wasUp = up;
     backoff = 5000;
     lastTry = millis();
   }
   if (up || millis() - lastTry < backoff) return;
-  Serial.printf("[wifi] mencoba sambung ulang (jeda %lu dtk)\n", (unsigned long)(backoff / 1000));
   WiFi.disconnect();
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  wifiBegin();
   lastTry = millis();
   backoff = min<uint32_t>(backoff * 2, 60000);
 }
@@ -183,8 +197,10 @@ void setup() {
   sensorsBegin();
   uploaderBegin(fillStatus);
   WiFi.mode(WIFI_STA);
+  WiFi.onEvent(onWifiEvent, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  WiFi.onEvent(onWifiEvent, ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFi.setAutoReconnect(true);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  wifiBegin();
   // NTP saat boot lalu tiap 6 jam; waktu disimpan UTC.
   sntp_set_sync_interval(6UL * 3600 * 1000);
   configTime(0, 0, "pool.ntp.org", "id.pool.ntp.org");
@@ -201,7 +217,14 @@ void loop() {
   // Sampel tiap 10 detik: selaras jam (detik 0,10,..,50) saat waktu valid, agar tepat 6 sampel/menit.
   bool valid = timeValid();
   if (valid != wasValid) {
-    Serial.println(valid ? "[waktu] tersinkron NTP" : "[waktu] belum valid: record tidak dibuat");
+    if (valid) {
+      char buf[24];
+      time_t now = time(nullptr);
+      strftime(buf, sizeof buf, "%F %T", gmtime(&now));
+      Serial.printf("[waktu] tersinkron NTP: %s UTC\n", buf);
+    } else {
+      Serial.println("[waktu] belum valid: record tidak dibuat");
+    }
     wasValid = valid;
   }
   bool aggDue = valid ? (time(nullptr) / 10 != lastSlot) : (millis() - lastSampleMs >= SAMPLE_MS);
@@ -228,6 +251,19 @@ void loop() {
     sensorsRetry();
   }
   uploaderTick(sendNow);
+  static uint32_t lastStatusMs = 0;
+  if (millis() - lastStatusMs >= 60000) {  // ringkasan tiap menit
+    lastStatusMs = millis();
+    Serial.printf("[status] wifi %s %d dBm | server %s | backlog %u%s | heap %u\n",
+                  WiFi.status() == WL_CONNECTED ? "OK" : "PUTUS", WiFi.RSSI(), uploaderOnline() ? "OK" : "PUTUS",
+                  (unsigned)uploaderBacklog(), uploaderBufferFull() ? " (PENUH)" : "", (unsigned)ESP.getFreeHeap());
+  }
   if (otaDue()) otaRun();
+  if (uploaderRestartDue()) {
+    uploaderPrepareOta();  // antrean RAM ke flash agar tidak ada record hilang
+    Serial.println("[restart] restart atas perintah server");
+    delay(200);
+    ESP.restart();
+  }
   delay(50);
 }

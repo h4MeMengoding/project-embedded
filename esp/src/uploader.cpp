@@ -36,6 +36,8 @@ struct Inflight {
 static Inflight inflight;
 static WebSocketsClient ws;
 static bool authed = false;
+static bool wsFailLogged = false;
+static bool restartRequested = false;
 static uint32_t msgId = 0;
 
 static size_t fileSize() {
@@ -159,7 +161,7 @@ static void handleText(uint8_t* payload, size_t length) {
   const char* type = d["type"] | "";
   if (!strcmp(type, "hello_ack")) {
     authed = true;
-    Serial.println("[ws] terautentikasi");
+    Serial.println("[ws] TERHUBUNG ke server (terautentikasi)");
   } else if (!strcmp(type, "ack")) {
     if (inflight.active && d["id"].as<uint32_t>() == inflight.id) {
       Serial.printf("[kirim] OK %u record%s (disimpan %d, duplikat %d)\n", (unsigned)inflight.recs.size(),
@@ -179,6 +181,9 @@ static void handleText(uint8_t* payload, size_t length) {
     }
   } else if (!strcmp(type, "ota")) {
     otaSchedule(d["path"] | "", d["size"] | 0, d["md5"] | "");
+  } else if (!strcmp(type, "restart")) {
+    Serial.println("[ws] perintah restart dari server");
+    restartRequested = true;
   } else if (!strcmp(type, "error")) {
     Serial.printf("[ws] server: %s (periksa DEVICE_ID / DEVICE_TOKEN di config.h)\n", d["error"] | "?");
   }
@@ -187,7 +192,8 @@ static void handleText(uint8_t* payload, size_t length) {
 static void onEvent(WStype_t type, uint8_t* payload, size_t length) {
   switch (type) {
     case WStype_CONNECTED: {
-      Serial.println("[ws] tersambung, kirim hello");
+      wsFailLogged = false;
+      Serial.printf("[ws] tersambung ke %s:%d, kirim hello\n", WS_HOST, WS_PORT);
       JsonDocument d;
       d["type"] = "hello";
       d["device_id"] = DEVICE_ID;
@@ -198,7 +204,11 @@ static void onEvent(WStype_t type, uint8_t* payload, size_t length) {
       break;
     }
     case WStype_DISCONNECTED:  // juga dipanggil tiap percobaan sambung yang gagal
-      if (authed) Serial.println("[ws] terputus");
+      if (authed) Serial.println("[ws] TERPUTUS dari server, mencoba sambung ulang");
+      else if (WiFi.status() == WL_CONNECTED && !wsFailLogged) {
+        wsFailLogged = true;
+        Serial.printf("[ws] gagal tersambung ke %s:%d (cek WS_HOST/WS_PORT/WS_TLS/ROOT_CA), terus mencoba tiap 5 dtk\n", WS_HOST, WS_PORT);
+      }
       authed = false;
       failInflight();
       break;
@@ -300,7 +310,11 @@ void uploaderTick(bool sendNow) {
   }
 }
 
+bool uploaderOnline() { return authed; }
+bool uploaderRestartDue() { return restartRequested; }
+
 static void uploaderConnect() {
+  Serial.printf("[ws] server %s://%s:%d%s\n", WS_TLS ? "wss" : "ws", WS_HOST, WS_PORT, WS_PATH);
 #if WS_TLS
   ws.beginSslWithCA(WS_HOST, WS_PORT, WS_PATH, ROOT_CA);
 #else

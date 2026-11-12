@@ -25,7 +25,7 @@
 // Root CA untuk WSS. Default: ISRG Root X1 (Let's Encrypt, dipakai Caddy), berlaku s.d. 2035-06-04.
 // SHA-256: 96:BC:EC:06:26:49:76:F3:74:60:77:9A:CF:28:C5:A7:CF:E8:A3:C0:AA:E1:1A:8F:FC:EE:05:C0:BD:DF:08:C6
 // Ganti jika domain lewat proxy Cloudflare atau memakai CA lain.
-static const char ROOT_CA[] = R"PEM(
+inline const char ROOT_CA[] = R"PEM(
 -----BEGIN CERTIFICATE-----
 MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
 TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh

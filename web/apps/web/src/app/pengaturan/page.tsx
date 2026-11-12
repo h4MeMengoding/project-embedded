@@ -11,6 +11,7 @@ import { LoginForm, LogoutButton } from '@/components/settings/LoginForm';
 import { RegionPicker } from '@/components/settings/RegionPicker';
 import { ModeCard, ResetCard } from '@/components/settings/ModeCard';
 import { FirmwareCard } from '@/components/settings/FirmwareCard';
+import { RestartCard } from '@/components/settings/RestartCard';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Pengaturan · Stasiun Cuaca' };
@@ -53,7 +54,7 @@ export default async function Pengaturan() {
             </div>
             {locked ? (
               <p className="mt-4 text-sm text-[var(--muted)]">
-                Periode evaluasi sudah dimulai ({formatWib(env.evalStart as Date, 'datetime')} WIB). Wilayah dikunci agar semua slot dibandingkan dengan prakiraan wilayah yang sama.
+                Periode evaluasi sudah dimulai ({formatWib(env.evalStart as Date, 'datetime')}). Wilayah dikunci agar semua slot dibandingkan dengan prakiraan wilayah yang sama.
               </p>
             ) : !pw ? (
               <p className="mt-4 text-sm text-[var(--muted)]">ADMIN_PASSWORD belum diisi di server. Isi di <code>.env</code> lalu mulai ulang web untuk mengubah pengaturan.</p>
@@ -74,9 +75,14 @@ export default async function Pengaturan() {
             </Card>
           )}
           {admin && device && (
+            <Card tone="light" title="Restart perangkat" subtitle={device.online ? 'Perangkat online' : 'Perangkat offline'}>
+              <RestartCard online={device.online} />
+            </Card>
+          )}
+          {admin && device && (
             <Card tone="light" title="Pembaruan firmware (OTA)" subtitle="Unggah firmware.bin, lalu kirim ke ESP32 yang sedang online">
               <FirmwareCard
-                items={images.map((i) => ({ id: i.id, version: i.version, sizeKb: Math.round(i.size / 1024), md5: i.md5, uploadedAt: formatWib(i.uploadedAt, 'datetime') + ' WIB' }))}
+                items={images.map((i) => ({ id: i.id, version: i.version, sizeKb: Math.round(i.size / 1024), md5: i.md5, uploadedAt: formatWib(i.uploadedAt, 'datetime') }))}
                 online={device.online}
                 fwVersion={device.fwVersion}
                 ip={device.ip}

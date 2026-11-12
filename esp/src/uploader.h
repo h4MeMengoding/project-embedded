@@ -16,5 +16,9 @@ void uploaderEnqueue(const String& record);
 void uploaderTick(bool sendNow);
 uint32_t uploaderBacklog();
 bool uploaderBufferFull();
+// true jika WebSocket tersambung dan hello diterima server.
+bool uploaderOnline();
+// true setelah server mengirim {"type":"restart"}; loop utama menyimpan antrean lalu ESP.restart().
+bool uploaderRestartDue();
 // Sebelum OTA: antrean RAM ke flash, putus WebSocket (tersambung ulang otomatis di loop berikutnya).
 void uploaderPrepareOta();
