@@ -7,7 +7,7 @@ import { NavBar } from '@/components/NavBar';
 import { HeroBand, PageShell } from '@/components/PageShell';
 import { RangePicker } from '@/components/history/RangePicker';
 import { SeriesChart } from '@/components/history/SeriesChart';
-import { LuDownload } from 'react-icons/lu';
+import { DownloadMenu } from '@/components/DownloadMenu';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Riwayat · Stasiun Cuaca' };
@@ -58,7 +58,12 @@ export default async function Riwayat({ searchParams }: { searchParams: Promise<
                 <p>Rekaman rata-rata per menit dari seluruh sensor dan peluang hujan fuzzy. Area berarsir menandai periode hujan terdeteksi.</p>
               </div>
               <div className="page-actions">
-                <a className="btn btn-light" href={`/api/export/readings?${q}`}><LuDownload aria-hidden="true" />Unduh CSV</a>
+                <DownloadMenu query={q} items={[
+                  { kind: 'readings', label: 'Data sensor per menit' },
+                  { kind: 'predictions', label: 'Prediksi fuzzy' },
+                  { kind: 'rain-events', label: 'Kejadian hujan' },
+                  { kind: 'bmkg', label: 'Prakiraan BMKG' },
+                ]} />
               </div>
             </div>
             <RangePicker preset={range.preset} from={range.from.toISOString()} to={range.to.toISOString()} />

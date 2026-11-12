@@ -9,8 +9,8 @@ import { SlotTable } from '@/components/evaluation/SlotTable';
 import { ConfusionMatrix } from '@/components/evaluation/ConfusionMatrix';
 import { MetricsTable } from '@/components/evaluation/MetricsTable';
 import { Assumptions } from '@/components/evaluation/Assumptions';
+import { DownloadMenu } from '@/components/DownloadMenu';
 import { RecomputeButton } from '@/components/evaluation/RecomputeButton';
-import { LuDownload } from 'react-icons/lu';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Evaluasi · Stasiun Cuaca' };
@@ -48,7 +48,7 @@ export default async function Evaluasi({ searchParams }: { searchParams: Promise
               </div>
               <div className="page-actions">
                 <RecomputeButton />
-                <a className="btn btn-light" href={`/api/export/evaluation?${q}`}><LuDownload aria-hidden="true" />Unduh CSV</a>
+                <DownloadMenu query={q} items={[{ kind: 'evaluation', label: 'Evaluasi per slot' }]} />
               </div>
             </div>
             <RangePicker

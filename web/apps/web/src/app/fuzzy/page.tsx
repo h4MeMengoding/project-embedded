@@ -22,7 +22,6 @@ export default function FuzzyPage() {
                 <h1>Fuzzy Mamdani</h1>
                 <p>Sistem inferensi fuzzy Mamdani untuk memperkirakan peluang hujan 3 jam ke depan dari tiga variabel masukan: perubahan tekanan (ΔP3h), kelembapan relatif (RH), dan selisih suhu terhadap titik embun (DPD). {C.pressureTide && `Nilai ΔP3h telah dikoreksi terhadap variasi harian tekanan (amplitudo ${C.pressureTide.amplitudeHpa.toString().replace('.', ',')} hPa, puncak pukul ${C.pressureTide.peakHourWib}.00 dan ${C.pressureTide.peakHourWib + 12}.00). Prediksi hujan ditetapkan bila peluang (satu desimal) melebihi ambang.`}</p>
               </div>
-              <span className="pl white">Konfigurasi aktif: {C.version}</span>
             </div>
           </div>
         </PageShell>

@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { toCsv } from '../src/lib/csv';
+import { toCsv, toRecords } from '../src/lib/csv';
 
 const one = (cell: string | number | boolean | Date | null) => toCsv(['h'], [[cell]]).split('\r\n')[1];
+
+describe('toRecords', () => {
+  it('keys by header, keeps types, Date as ISO in JSON', () => {
+    const r = toRecords(['a', 'b', 'c', 'd'], [[1.5, true, null, new Date('2026-11-07T00:00:00Z')]]);
+    expect(JSON.parse(JSON.stringify(r))).toEqual([{ a: 1.5, b: true, c: null, d: '2026-11-07T00:00:00.000Z' }]);
+  });
+});
 
 describe('toCsv', () => {
   it('uses CRLF and header', () => expect(toCsv(['a', 'b'], [[1, 2]])).toBe('a,b\r\n1,2\r\n'));

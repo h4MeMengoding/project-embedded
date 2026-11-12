@@ -49,8 +49,8 @@ export async function buildExport(db: Db, kind: Kind, deviceId: string, from: Da
     case 'evaluation': {
       const ev = await getEvaluation(db, deviceId, from, to);
       return {
-        headers: ['device_id', 'slot_start_utc', 'slot_start_wib', 'slot_end_utc', 'wet_minutes', 'data_minutes', 'actual_rain', 'fuzzy_probability', 'fuzzy_predict_rain', 'bmkg_weather_desc', 'bmkg_predict_rain', 'fuzzy_correct', 'bmkg_correct', 'status', 'in_metrics'],
-        rows: ev.slots.map((x) => [x.deviceId, ...t2(x.slotStart), x.slotEnd, x.wetMinutes, x.dataMinutes, x.actualRain, x.fuzzyProbability, x.fuzzyPredictRain, x.bmkgWeatherDesc, x.bmkgPredictRain, x.fuzzyCorrect, x.bmkgCorrect, x.status, x.status === 'ok']),
+        headers: ['device_id', 'slot_start_utc', 'slot_start_wib', 'slot_end_utc', 'slot_end_wib', 'wet_minutes', 'data_minutes', 'actual_rain', 'fuzzy_probability', 'fuzzy_predict_rain', 'bmkg_weather_desc', 'bmkg_predict_rain', 'fuzzy_correct', 'bmkg_correct', 'status', 'in_metrics'],
+        rows: ev.slots.map((x) => [x.deviceId, ...t2(x.slotStart), ...t2(x.slotEnd), x.wetMinutes, x.dataMinutes, x.actualRain, x.fuzzyProbability, x.fuzzyPredictRain, x.bmkgWeatherDesc, x.bmkgPredictRain, x.fuzzyCorrect, x.bmkgCorrect, x.status, x.status === 'ok']),
       };
     }
   }

@@ -8,6 +8,11 @@ function cell(v: Cell): string {
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
+/** Baris tabel -> array objek berkunci header (Date -> ISO lewat JSON.stringify), untuk ekspor JSON. */
+export function toRecords(headers: string[], rows: Cell[][]): Record<string, Cell>[] {
+  return rows.map((r) => Object.fromEntries(headers.map((h, i) => [h, r[i] ?? null])));
+}
+
 export function toCsv(headers: string[], rows: Cell[][]): string {
   return [headers, ...rows].map((r) => r.map(cell).join(',')).join('\r\n') + '\r\n';
 }
