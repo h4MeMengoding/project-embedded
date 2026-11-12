@@ -1,4 +1,4 @@
-import { agreementCopy, categoryCopy, currentRainCopy, dewPoint, formatWib, isPredictRain, isRainForecast, type Level3 } from '@ws/core';
+import { agreementCopy, categoryCopy, dewPoint, formatWib, isPredictRain, isRainForecast, type Level3 } from '@ws/core';
 
 export type HomeInput = {
   reading: { ts: Date; tempDht: number | null; humDht: number | null; pressureHpa: number | null; lux: number | null; rainWetSeconds: number | null } | null;
@@ -17,7 +17,7 @@ export type HomeState =
       agreement: string | null;
       agreementTone: 'ok' | 'bad' | null;
       verdict: string | null;
-      current: string;
+      rainWet: boolean | null;
       sensors: { temp: number | null; hum: number | null; pressure: number | null; lux: number | null; dewPoint: number | null; deltaP3h: number | null };
       lastSeenLabel: string | null;
       lastSeenTime: string | null;
@@ -51,7 +51,7 @@ export function deriveHomeState(i: HomeInput): HomeState {
     agreement,
     agreementTone,
     verdict,
-    current: currentRainCopy(reading?.rainWetSeconds != null ? reading.rainWetSeconds >= 30 : null),
+    rainWet: reading?.rainWetSeconds != null ? reading.rainWetSeconds >= 30 : null,
     sensors: {
       temp,
       hum,

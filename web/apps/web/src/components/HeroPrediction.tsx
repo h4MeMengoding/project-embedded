@@ -1,5 +1,6 @@
 import { formatWib } from '@ws/core';
 import type { SensorFlags } from '@ws/core';
+import { LuCloud, LuCloudRain } from 'react-icons/lu';
 import type { HomeState } from '../lib/homeState';
 import { RingGauge } from './RingGauge';
 import { Pill } from './Pill';
@@ -27,9 +28,12 @@ export function HeroPrediction({ state, predictionTs, sensors }: { state: HomeSt
             <div className="lead">{state.headline}</div>
             {state.verdict && <div className="verdict">{state.verdict}</div>}
           </div>
+          <div className={`now-rain${state.rainWet ? ' wet' : ''}`} role="status" aria-live="polite">
+            <span className="ico">{state.rainWet ? <LuCloudRain aria-hidden="true" /> : <LuCloud aria-hidden="true" />}</span>
+            <span><small>Saat ini</small><b>{state.rainWet == null ? 'Belum ada data' : state.rainWet ? 'Sedang hujan' : 'Tidak hujan'}</b></span>
+          </div>
           <div className="pills">
             {state.agreement && <Pill tone={state.agreementTone === 'bad' ? 'whitebad' : 'white'}>{state.agreement}</Pill>}
-            <Pill tone="warn">{state.current}</Pill>
             {state.kind !== 'offline' && <span className="pill-status"><Pill tone="ok">Perangkat online{state.lastSeenTime ? ` · ${state.lastSeenTime}` : ''}</Pill></span>}
             {state.kind === 'offline' && <span className="pill-status"><Pill tone="warn">Perangkat offline{state.lastSeenLabel ? ` · ${state.lastSeenLabel}` : ''}</Pill></span>}
           </div>

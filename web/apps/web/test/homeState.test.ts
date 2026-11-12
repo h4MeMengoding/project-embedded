@@ -36,7 +36,7 @@ describe('deriveHomeState', () => {
   });
   it('wet >= 30 -> basah', () => {
     const s = deriveHomeState({ ...base, reading: reading({ rainWetSeconds: 30 }) });
-    expect(s.kind === 'ok' && s.current).toBe('Sensor hujan: basah');
+    expect(s.kind === 'ok' && s.rainWet).toBe(true);
   });
   it('ok headline and percent', () => {
     const s = deriveHomeState(base);

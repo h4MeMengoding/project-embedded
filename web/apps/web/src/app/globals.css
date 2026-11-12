@@ -177,6 +177,15 @@ body {
 /* ===== beranda: data offline, vonis biner, tren ===== */
 .hero-main.stale svg, .hero-main.stale .lead, .hero-main.stale .verdict { filter: grayscale(1); opacity: 0.6; }
 .stats.stale { filter: grayscale(1); opacity: 0.6; }
+.now-rain { display: inline-flex; align-self: flex-start; align-items: center; gap: 14px; padding: 10px 24px 10px 10px; border-radius: 20px; background: #fff; color: #0f2a1b; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14); }
+.now-rain .ico { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: #e6ede6; color: #2c8640; }
+.now-rain .ico svg { width: 24px; height: 24px; }
+.now-rain small { display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #587062; }
+.now-rain b { display: block; font-size: 20px; font-weight: 800; line-height: 1.2; }
+.now-rain.wet { background: #1f6fb8; color: #fff; }
+.now-rain.wet .ico { background: rgba(255, 255, 255, 0.18); color: #fff; }
+.now-rain.wet small { color: #cfe6ff; }
+.hero-main.stale .now-rain { filter: grayscale(1); opacity: 0.75; }
 .verdict { margin-top: 6px; font-size: 15px; font-weight: 600; color: #e2f3dc; }
 .stat .trend { margin-top: 6px; font-size: 13px; font-weight: 700; color: #ffe680; }
 .pl.bad i { background: #f08a3c; }
